@@ -21,7 +21,7 @@ RESTRICT="primaryuri"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="-* ~amd64"
-IUSE="-debug -demo"
+IUSE="-debug -doc -examples"
 
 DEPEND="app-arch/unzip dev-lang/nasm"
 
@@ -36,6 +36,7 @@ pkg_setup() {
 	GCC_VERS=$(delete_all_version_separators ${GCC_VERS})
 	export toolchain_tag="GCC${GCC_VERS}"
 	export ARCH="X64"
+	export ARCH_SIZE="64"
 	use debug && export compile_mode="DEBUG" || export compile_mode="RELEASE"
 }
 
@@ -47,6 +48,7 @@ src_unpack() {
 	mv "${WORKDIR}/BaseTools(Unix).tar" "${S}"
 	cd "${S}"
 	tar -xf "BaseTools(Unix).tar"
+	use doc && unzip "${WORKDIR}/Documents/MdeModulePkg Document.zip"
 }
 
 src_prepare() {
@@ -70,7 +72,7 @@ src_configure() {
 }
 
 src_compile() {
-	if use demo; then
+	if use examples; then
 		BUILD_TARGET=all
 	else
 		BUILD_TARGET=libraries
@@ -82,22 +84,37 @@ src_compile() {
 }
 
 src_install() {
-	BUILD_DIR="${S}/Build/MdeModule/${compile_mode}_${toolchain_tag}"
-	LIB_DIR="${BUILD_DIR}/X64/MdePkg/Library"
-	for l in "${LIB_DIR}"/*/*/OUTPUT/*.lib; do
-		dolib "${l}"
-	done
+	BUILD_DIR="${S}/Build/MdeModule/${compile_mode}_${toolchain_tag}/${ARCH}"
+
+	insinto "/usr/lib${ARCH_SIZE}/${PF}"
+	doins "${BUILD_DIR}/MdePkg/Library"/*/*/OUTPUT/*.lib
+	doins "${S}/BaseTools/Scripts"/gcc*-ld-script
+
 	INCLUDE_DIR="${S}/MdePkg/Include"
 	INCLUDE_DEST="/usr/include/edk2"
-	for s in "" /Uefi /Guid /IndustryStandard /Library /Protocol /${ARCH}; do
-		dodir "${INCLUDE_DEST}${s}"
-		insinto "${INCLUDE_DEST}${s}"
-		for h in "${INCLUDE_DIR}${s}"/*.h; do
-			doins "${h}"
-		done
+	for f in "" /Uefi /Guid /IndustryStandard /Library /Protocol /${ARCH}; do
+		insinto "${INCLUDE_DEST}${f}"
+		doins "${INCLUDE_DIR}${f}"/*.h
 	done
-	# TODO Must install demo somewhere, but Makefiles for demo needs to be
-	# TODO modified.
+
+	if use doc; then
+		dohtml -r "${S}/html"/*
+	fi
+
+	if use examples; then
+		for f in "${S}/MdeModulePkg/Application"/*; do
+			EXAMPLE_DIR=$(basename "${f}")
+			EX_OUTPUT="${BUILD_DIR}/MdeModulePkg/Application"
+			EX_OUTPUT="${EX_OUTPUT}/${EXAMPLE_DIR}/${EXAMPLE_DIR}"
+			docinto "examples/${EXAMPLE_DIR}"
+			find "${f}" -name '*.h' -exec dodoc '{}' +
+			find "${f}" -name '*.c' -exec dodoc '{}' +
+			createMakefile "${f}/Makefile" "${EXAMPLE_DIR}" \
+				"${EX_OUTPUT}/GNUmakefile"
+			dodoc "${f}/Makefile"
+			dodoc "${EX_OUTPUT}/DEBUG"/AutoGen.*
+		done
+	fi
 
 	# TODO  * QA Notice: Package triggers severe warnings which indicate that it
 	# TODO  *            may exhibit random runtime failures.
@@ -107,6 +124,50 @@ src_install() {
 
 pkg_postinst() {
 	elog "Installation done for ${ARCH}"
-	# TODO If demo is selected, display where demo projects can be found.
+	use doc && \
+		elog "You can find documentation in /usr/share/doc/${PF}/html"
+	use examples && \
+		elog "You can find examples in /usr/share/doc/${PF}/examples"
 }
 
+##
+# Parameters :
+# 1 - Name of the file to create.
+# 2 - Name of the module.
+# 3 - Name of the generated GNUmakefile
+createMakefile() {
+	cat >${1} <<EOF
+EXEC=${2}.efi
+SRC=\$(wildcard *.c)
+OBJ=\$(SRC:.c=.o)
+EFIINC=/usr/include/edk2
+CFLAGS=-g -fshort-wchar -fno-strict-aliasing -Wall -Werror -Wno-array-bounds -ffunction-sections -fdata-sections -c -include AutoGen.h -DSTRING_ARRAY_NAME=${2}Strings -m64 -fno-stack-protector "-DEFIAPI=__attribute__((ms_abi))" -DNO_BUILTIN_VA_FUNCS -mno-red-zone -Wno-address -mcmodel=large -Wno-address -Wno-unused-but-set-variable
+LIB=/usr/lib64/${PF}
+STATIC_LIBRARY_FILES =  \\
+EOF
+
+	perl -ne 'if( m/^STATIC_LIBRARY_FILES\s*=/ ){ $static=1; }elsif( $static ){ if( m!^\s*\$\(BIN_DIR\).*(/[^/]*\.lib)! ){ print "\t\$(LIB)${1} \\\n" }else{ $static=0; }}' >>${1} <${3}
+
+	cat >>${1} <<EOF
+
+EFI_LDS=\$(LIB)/gcc4.4-ld-script
+LDFLAGS=-nostdlib -n -q --gc-sections -T \$(EFI_LDS) --entry _ModuleEntryPoint -u _ModuleEntryPoint -shared -Bsymbolic -lefi -L \$(STATIC_LIBRARY_FILES)
+
+all:	\$(EXEC)
+
+clean:
+	@rm -rf *.o *.so
+
+mrproper: clean
+	@rm -rf \$(EXEC)
+
+%.so:	\$(OBJ)
+	@ld \$(LDFLAGS) \$^ -o \$@
+
+%.efi:	%.so
+	@objcopy -j .text -j .sdata -j .data -j .dynamic -j .dynsym  -j .rel \\
+	 -j .rela -j .reloc --target=efi-app-x86_64 \$^ \$@
+
+.PHONY: all clean mrproper
+EOF
+}
