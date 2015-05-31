@@ -43,32 +43,35 @@ pkg_setup() {
 src_unpack() {
 	unpack ${A}
 	cd "${WORKDIR}"
-	unzip "UDK2014.SP1.P1.MyWorkSpace.zip"
+	unzip "UDK2014.SP1.P1.MyWorkSpace.zip" || die "Failed to unzip workspace"
 	mv "${WORKDIR}/MyWorkSpace" "${S}"
 	mv "${WORKDIR}/BaseTools(Unix).tar" "${S}"
 	cd "${S}"
-	tar -xf "BaseTools(Unix).tar"
-	use doc && unzip "${WORKDIR}/Documents/MdeModulePkg Document.zip"
+	tar -xf "BaseTools(Unix).tar" || die "Failed to untar base tools"
+	if use doc; then
+		unzip "${WORKDIR}/Documents/MdeModulePkg Document.zip" \
+			 || die "Failed to unzip documentation"
+	fi
 }
 
 src_prepare() {
-	make -C BaseTools || die "Impossible to compile EDK2 base tools"
+	make -C BaseTools || die "Failed to compile EDK2 base tools"
 	export EDK_TOOLS_PATH="${S}/BaseTools"
 	. edksetup.sh BaseTools
 }
 
 src_configure() {
 	sed -i -e "s/^\(TOOL_CHAIN_TAG\s*=\).*\$/\\1 ${toolchain_tag}/" \
-		"${S}/Conf/target.txt" || die "Could not set tool chain"
+		"${S}/Conf/target.txt" || die "Failed to set tool chain"
 	sed -i -e \
 		"s!^\(ACTIVE_PLATFORM\s*=\).*\$!\\1 MdeModulePkg\\/MdeModulePkg.dsc!" \
-		"${S}/Conf/target.txt" || die "Could not set platform"
+		"${S}/Conf/target.txt" || die "Failed to set platform"
 	sed -i -e \
 		"s/^\(TARGET\s*=\).*\$/\\1 ${compile_mode}/" \
-		"${S}/Conf/target.txt" || die "Could not set target compile mode"
+		"${S}/Conf/target.txt" || die "Failed to set target compile mode"
 	sed -i -e \
 		"s/^\(TARGET_ARCH\s*=\).*\$/\\1 ${ARCH}/" \
-		"${S}/Conf/target.txt" || die "Could not set target architecture"
+		"${S}/Conf/target.txt" || die "Failed to set target architecture"
 }
 
 src_compile() {
@@ -77,7 +80,7 @@ src_compile() {
 	else
 		BUILD_TARGET=libraries
 	fi
-	build ${BUILD_TARGET} || die "Could not compile environment"
+	build ${BUILD_TARGET} || die "Failed to compile environment"
 	# TODO Sometimes a package will not use the user's ${CFLAGS} or ${LDFLAGS}.
 	# TODO This must be worked around.
 	# TODO See https://devmanual.gentoo.org/ebuild-writing/functions/src_compile/building/index.html
@@ -92,7 +95,14 @@ src_install() {
 
 	INCLUDE_DIR="${S}/MdePkg/Include"
 	INCLUDE_DEST="/usr/include/edk2"
-	for f in "" /Uefi /Guid /IndustryStandard /Library /Protocol /${ARCH}; do
+	insinto "${INCLUDE_DEST}"
+	doins "${INCLUDE_DIR}"/*.h "${INCLUDE_DIR}/${ARCH}"/*.h
+	for f in /Uefi /Guid /IndustryStandard /Library /Protocol; do
+		insinto "${INCLUDE_DEST}${f}"
+		doins "${INCLUDE_DIR}${f}"/*.h
+	done
+	INCLUDE_DIR="${S}/MdeModulePkg/Include"
+	for f in /Guid /Library /Ppi /Protocol; do
 		insinto "${INCLUDE_DEST}${f}"
 		doins "${INCLUDE_DIR}${f}"/*.h
 	done
@@ -102,18 +112,24 @@ src_install() {
 	fi
 
 	if use examples; then
+		EX_REBUILD_DIR="${S}/${P}-exemples"
 		for f in "${S}/MdeModulePkg/Application"/*; do
-			EXAMPLE_DIR=$(basename "${f}")
-			EX_OUTPUT="${BUILD_DIR}/MdeModulePkg/Application"
-			EX_OUTPUT="${EX_OUTPUT}/${EXAMPLE_DIR}/${EXAMPLE_DIR}"
-			docinto "examples/${EXAMPLE_DIR}"
-			find "${f}" -name '*.h' -exec dodoc '{}' +
-			find "${f}" -name '*.c' -exec dodoc '{}' +
-			createMakefile "${f}/Makefile" "${EXAMPLE_DIR}" \
-				"${EX_OUTPUT}/GNUmakefile"
-			dodoc "${f}/Makefile"
-			dodoc "${EX_OUTPUT}/DEBUG"/AutoGen.*
+			EX_NAME=$(basename "${f}")
+			mkdir -p "${EX_REBUILD_DIR}/${EX_NAME}"
+			EX_BUILD_DIR="${BUILD_DIR}/MdeModulePkg/Application"
+			EX_BUILD_DIR="${EX_BUILD_DIR}/${EX_NAME}/${EX_NAME}"
+			find "${f}" -name '*.h' -exec mv '{}' \
+				"${EX_REBUILD_DIR}/${EX_NAME}" \;
+			find "${f}" -name '*.c' -exec mv '{}' \
+				"${EX_REBUILD_DIR}/${EX_NAME}" \;
+			createMakefile "${EX_REBUILD_DIR}/${EX_NAME}/Makefile" \
+				"${EX_NAME}" "${EX_BUILD_DIR}/GNUmakefile"
+			mv "${EX_BUILD_DIR}/DEBUG"/AutoGen.* "${EX_REBUILD_DIR}/${EX_NAME}"
+			tar -C "${EX_REBUILD_DIR}" -cf "${EX_REBUILD_DIR}/${EX_NAME}.tar" \
+				"${EX_NAME}" || die "Failed to create ${EX_NAME} example file"
 		done
+		docinto "examples"
+		dodoc "${EX_REBUILD_DIR}"/*.tar
 	fi
 
 	# TODO  * QA Notice: Package triggers severe warnings which indicate that it
@@ -141,7 +157,7 @@ EXEC=${2}.efi
 SRC=\$(wildcard *.c)
 OBJ=\$(SRC:.c=.o)
 EFIINC=/usr/include/edk2
-CFLAGS=-g -fshort-wchar -fno-strict-aliasing -Wall -Werror -Wno-array-bounds -ffunction-sections -fdata-sections -c -include AutoGen.h -DSTRING_ARRAY_NAME=${2}Strings -m64 -fno-stack-protector "-DEFIAPI=__attribute__((ms_abi))" -DNO_BUILTIN_VA_FUNCS -mno-red-zone -Wno-address -mcmodel=large -Wno-address -Wno-unused-but-set-variable
+CFLAGS=-g -fshort-wchar -fno-strict-aliasing -fPIC -Wall -Werror -Wno-array-bounds -ffunction-sections -fdata-sections -c -include AutoGen.h -I\$(EFIINC) -DSTRING_ARRAY_NAME=${2}Strings -m64 -fno-stack-protector "-DEFIAPI=__attribute__((ms_abi))" -DNO_BUILTIN_VA_FUNCS -mno-red-zone -Wno-address -mcmodel=large -Wno-address -Wno-unused-but-set-variable
 LIB=/usr/lib64/${PF}
 STATIC_LIBRARY_FILES =  \\
 EOF
@@ -151,15 +167,15 @@ EOF
 	cat >>${1} <<EOF
 
 EFI_LDS=\$(LIB)/gcc4.4-ld-script
-LDFLAGS=-nostdlib -n -q --gc-sections -T \$(EFI_LDS) --entry _ModuleEntryPoint -u _ModuleEntryPoint -shared -Bsymbolic -lefi -L \$(STATIC_LIBRARY_FILES)
+LDFLAGS=-nostdlib -n -q --gc-sections -T \$(EFI_LDS) --entry _ModuleEntryPoint -u _ModuleEntryPoint -shared -Bsymbolic -L \$(STATIC_LIBRARY_FILES)
 
 all:	\$(EXEC)
 
 clean:
-	@rm -rf *.o *.so
+	@rm -f *.o *.so
 
 mrproper: clean
-	@rm -rf \$(EXEC)
+	@rm -f \$(EXEC)
 
 %.so:	\$(OBJ)
 	@ld \$(LDFLAGS) \$^ -o \$@
