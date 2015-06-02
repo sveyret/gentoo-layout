@@ -27,7 +27,7 @@ DEPEND="app-arch/unzip dev-lang/nasm"
 
 # We know this file contains WX sections, but we are in UEFI, before any kernel
 # is loaded, before being in protected mode.
-QA_EXECSTACK="usr/lib*/BaseLib.lib*"
+QA_EXECSTACK="usr/lib*/BaseLib.a*"
 
 pkg_setup() {
 	# Calculate toolchain tag
@@ -42,14 +42,13 @@ pkg_setup() {
 
 src_unpack() {
 	unpack ${A}
-	cd "${WORKDIR}"
-	unzip "UDK2014.SP1.P1.MyWorkSpace.zip" || die "Failed to unzip workspace"
+	unzip -d"${WORKDIR}" "UDK2014.SP1.P1.MyWorkSpace.zip" \
+		|| die "Failed to unzip workspace"
 	mv "${WORKDIR}/MyWorkSpace" "${S}"
-	mv "${WORKDIR}/BaseTools(Unix).tar" "${S}"
-	cd "${S}"
-	tar -xf "BaseTools(Unix).tar" || die "Failed to untar base tools"
+	tar -C "${S}" -xf "${WORKDIR}/BaseTools(Unix).tar" \
+		|| die "Failed to untar base tools"
 	if use doc; then
-		unzip "${WORKDIR}/Documents/MdeModulePkg Document.zip" \
+		unzip -d"${S}" "${WORKDIR}/Documents/MdeModulePkg Document.zip" \
 			 || die "Failed to unzip documentation"
 	fi
 }
@@ -90,7 +89,9 @@ src_install() {
 	BUILD_DIR="${S}/Build/MdeModule/${compile_mode}_${toolchain_tag}/${ARCH}"
 
 	insinto "/usr/lib${ARCH_SIZE}/${PF}"
-	doins "${BUILD_DIR}/MdePkg/Library"/*/*/OUTPUT/*.lib
+	for f in "${BUILD_DIR}/MdePkg/Library"/*/*/OUTPUT/*.lib; do
+		newins "${f}" lib$(basename "${f}" .lib).a
+	done
 	doins "${S}/BaseTools/Scripts"/gcc*-ld-script
 
 	INCLUDE_DIR="${S}/MdePkg/Include"
@@ -106,6 +107,8 @@ src_install() {
 		insinto "${INCLUDE_DEST}${f}"
 		doins "${INCLUDE_DIR}${f}"/*.h
 	done
+
+	dobin "${S}/BaseTools/Source/C/bin/GenFw"
 
 	if use doc; then
 		dohtml -r "${S}/html"/*
@@ -148,41 +151,70 @@ pkg_postinst() {
 
 ##
 # Parameters :
-# 1 - Name of the file to create.
+# 1 - Path of the file to create.
 # 2 - Name of the module.
-# 3 - Name of the generated GNUmakefile
+# 3 - Path of the generated GNUmakefile
 createMakefile() {
 	cat >${1} <<EOF
 EXEC=${2}.efi
 SRC=\$(wildcard *.c)
 OBJ=\$(SRC:.c=.o)
-EFIINC=/usr/include/edk2
-CFLAGS=-g -fshort-wchar -fno-strict-aliasing -fPIC -Wall -Werror -Wno-array-bounds -ffunction-sections -fdata-sections -c -include AutoGen.h -I\$(EFIINC) -DSTRING_ARRAY_NAME=${2}Strings -m64 -fno-stack-protector "-DEFIAPI=__attribute__((ms_abi))" -DNO_BUILTIN_VA_FUNCS -mno-red-zone -Wno-address -mcmodel=large -Wno-address -Wno-unused-but-set-variable
-LIB=/usr/lib64/${PF}
+INC_DIR=/usr/include/edk2
+LIB_DIR=/usr/lib64/${PF}
 STATIC_LIBRARY_FILES =  \\
 EOF
 
-	perl -ne 'if( m/^STATIC_LIBRARY_FILES\s*=/ ){ $static=1; }elsif( $static ){ if( m!^\s*\$\(BIN_DIR\).*(/[^/]*\.lib)! ){ print "\t\$(LIB)${1} \\\n" }else{ $static=0; }}' >>${1} <${3}
+	perl -ne 'if( m/^STATIC_LIBRARY_FILES\s*=/ ){ $static=1; }elsif( $static ){ if( m!^\s*\$\(BIN_DIR\).*/([^/]*)\.lib! ){ print "\t\"-l${1}\" \\\n" }else{ $static=0; }}' >>${1} <${3}
 
 	cat >>${1} <<EOF
 
-EFI_LDS=\$(LIB)/gcc4.4-ld-script
-LDFLAGS=-nostdlib -n -q --gc-sections -T \$(EFI_LDS) --entry _ModuleEntryPoint -u _ModuleEntryPoint -shared -Bsymbolic -L \$(STATIC_LIBRARY_FILES)
+EFI_LDS=\$(LIB_DIR)/gcc4.4-ld-script
+
+EOF
+	grep -e '^MODULE_TYPE\s*=' ${3} >>${1}
+	grep -e '^IMAGE_ENTRY_POINT\s*=' ${3} >>${1}
+	echo >>${1}
+	grep -e '^CP\s*=' ${3} >>${1}
+	grep -e '^RM\s*=' ${3} >>${1}
+	grep -e '^CC\s*=' ${3} >>${1}
+	grep -e '^DLINK\s*=' ${3} >>${1}
+	grep -e '^OBJCOPY\s*=' ${3} >>${1}
+	grep -e '^GENFW\s*=' ${3} >>${1}
+	cat >>${1} <<EOF
+
+CC_FLAGS=-g -fshort-wchar -fno-strict-aliasing -Wall -Werror -Wno-array-bounds \
+-ffunction-sections -fdata-sections -c -include AutoGen.h -I\$(INC_DIR) \
+-DSTRING_ARRAY_NAME=${2}Strings -m64 -fno-stack-protector \
+"-DEFIAPI=__attribute__((ms_abi))" -DNO_BUILTIN_VA_FUNCS -mno-red-zone \
+-Wno-address -mcmodel=large -Wno-address -Wno-unused-but-set-variable
+DLINK_FLAGS=-nostdlib -n -q --gc-sections --script=\$(EFI_LDS) --entry \
+\$(IMAGE_ENTRY_POINT) -u \$(IMAGE_ENTRY_POINT) -melf_x86_64 \
+--oformat=elf64-x86-64 -L \$(LIB_DIR)
+EOF
+	grep -e '^OBJCOPY_FLAGS\s*=' ${3} >>${1}
+	grep -e '^GENFW_FLAGS\s*=' ${3} >>${1}
+	cat >>${1} <<EOF
 
 all:	\$(EXEC)
 
+%.efi:	\$(OBJ)
+	\$(DLINK) -o \$(@:.efi=.dll) \$(DLINK_FLAGS) \\
+		--start-group \$(STATIC_LIBRARY_FILES) \$^ --end-group
+	\$(OBJCOPY) \$(OBJCOPY_FLAGS) \$(@:.efi=.dll)
+	\$(CP) \$(@:.efi=.dll) \$(@:.efi=.debug)
+	\$(OBJCOPY) --strip-unneeded -R .eh_frame \$(@:.efi=.dll)
+	\$(OBJCOPY) --add-gnu-debuglink=\$(@:.efi=.debug) \$(@:.efi=.dll)
+	\$(GENFW) -e \$(MODULE_TYPE) -o \$@ \$(@:.efi=.dll) $(GENFW_FLAGS)
+	\$(RM) \$(@:.efi=.dll)
+
+%.o:	%.c
+	\$(CC) \$(CC_FLAGS) -o \$@ \$^
+
 clean:
-	@rm -f *.o *.so
+	\$(RM) *.o
 
 mrproper: clean
-	@rm -f \$(EXEC)
-
-%.so:	\$(OBJ)
-	@ld \$(LDFLAGS) \$^ -o \$@
-
-%.efi:	%.so
-	@objcopy -j .text -j .sdata -j .data -j .dynamic -j .dynsym  -j .rel \\
-	 -j .rela -j .reloc --target=efi-app-x86_64 \$^ \$@
+	\$(RM) \$(EXEC) \$(EXEC:.efi=.debug)
 
 .PHONY: all clean mrproper
 EOF
