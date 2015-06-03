@@ -27,7 +27,7 @@ DEPEND="app-arch/unzip dev-lang/nasm"
 
 # We know this file contains WX sections, but we are in UEFI, before any kernel
 # is loaded, before being in protected mode.
-QA_EXECSTACK="usr/lib*/BaseLib.a*"
+QA_EXECSTACK="usr/lib*/libBaseLib.a*"
 
 pkg_setup() {
 	# Calculate toolchain tag
@@ -42,7 +42,7 @@ pkg_setup() {
 
 src_unpack() {
 	unpack ${A}
-	unzip -d"${WORKDIR}" "UDK2014.SP1.P1.MyWorkSpace.zip" \
+	unzip -d"${WORKDIR}" "${MY_PV}.MyWorkSpace.zip" \
 		|| die "Failed to unzip workspace"
 	mv "${WORKDIR}/MyWorkSpace" "${S}"
 	tar -C "${S}" -xf "${WORKDIR}/BaseTools(Unix).tar" \
