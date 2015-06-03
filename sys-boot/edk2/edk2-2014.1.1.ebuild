@@ -48,8 +48,15 @@ src_unpack() {
 	tar -C "${S}" -xf "${WORKDIR}/BaseTools(Unix).tar" \
 		|| die "Failed to untar base tools"
 	if use doc; then
-		unzip -d"${S}" "${WORKDIR}/Documents/MdeModulePkg Document.zip" \
-			 || die "Failed to unzip documentation"
+		mkdir -p"${S}/doc"
+		unzip -d"${S}/doc" \
+			"${WORKDIR}/Documents/MdeModulePkg Document.zip" \
+			|| die "Failed to unzip documentation"
+		mv "${S}/doc/html" "${S}/doc/MdeModulePkg"
+		unzip -d"${S}/doc" \
+			"${WORKDIR}/Documents/MdePkg Document.zip" \
+			|| die "Failed to unzip documentation"
+		mv "${S}/doc/html" "${S}/doc/MdePkg"
 	fi
 }
 
@@ -111,7 +118,7 @@ src_install() {
 	dobin "${S}/BaseTools/Source/C/bin/GenFw"
 
 	if use doc; then
-		dohtml -r "${S}/html"/*
+		dohtml -r "${S}/doc"/*
 	fi
 
 	if use examples; then
