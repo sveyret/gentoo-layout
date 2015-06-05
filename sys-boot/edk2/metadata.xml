@@ -2,12 +2,12 @@
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
   <longdescription lang="en">
-    This ebuild compiles the library and installs required files for the
-    Tianocore UEFI development kit.
+    Tianocore UEFI development kit, installed as classical Linux libraries and
+	header files.
   </longdescription>
   <longdescription lang="fr">
-    Cet ebuild compile la bibliothèque et installe les fichiers nécessaires
-    pour le kit de développement UEFI Tianocore.
+    Kit de développement UEFI Tianocore, installé comme des bibliothèques et
+	des fichiers d'en-tête Linux classiques.
   </longdescription>
   <use lang="en">
     <flag name="debug">Compile libraries with debug information.</flag>
