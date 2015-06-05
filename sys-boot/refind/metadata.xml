@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <longdescription lang="en">
+    rEFInd UEFI boot manager.
+  </longdescription>
+  <longdescription lang="fr">
+    Gestionnaire d'amorçage UEFI rEFInd.
+  </longdescription>
+  <use lang="en">
+    <flag name="gnuefi">Compile using GNU-EFI instead of Tianocore</flag>
+  </use>
+  <use lang="fr">
+    <flag name="gnuefi">Compiler en utilisant GNU-EFI au lieu de Tianocore</flag>
+  </use>
+</pkgmetadata>
+

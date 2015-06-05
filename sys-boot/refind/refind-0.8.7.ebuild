@@ -12,7 +12,7 @@ RESTRICT="primaryuri"
 LICENSE="BSD GPL-2 GPL-3 FDL-1.3"
 SLOT="0"
 KEYWORDS="-* ~amd64"
-IUSE="-gnuefi +ext2 +ext4 +reiserfs +iso9660 +hfs +btrfs +ntfs"
+IUSE="-gnuefi"
 
 DEPEND="!gnuefi? ( >=sys-boot/edk2-2014.1.1 )"
 DEPEND="${DEPEND} gnuefi? ( >=sys-boot/gnu-efi-3.0.2 )"
@@ -51,10 +51,12 @@ src_compile() {
 
 	# Make filesystem drivers
 	use gnuefi && export gnuefi_target="_gnuefi"
-	for d in ext2 ext4 reiserfs iso9660 hfs btrfs ntfs; do
-		if use ${d}; then
-			emake -C "${S}/filesystems" "${d}${gnuefi_target}"
-		fi
+	for d in ext2 ext4 reiserfs iso9660 hfs ntfs; do
+		emake -C "${S}/filesystems" "${d}${gnuefi_target}"
 	done
+}
+
+src_install() {
+	"${S}/install.sh" --root "${D}"
 }
 
