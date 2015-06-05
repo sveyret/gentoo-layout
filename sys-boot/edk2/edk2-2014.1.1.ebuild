@@ -15,7 +15,8 @@ MY_SP="SP${MY_SP}"
 MY_P=$(get_version_component_range 3)
 MY_P="P${MY_P}"
 MY_PV="${MY_MV}.${MY_SP}.${MY_P}"
-SRC_URI="mirror://sourceforge/project/${PN}/${MY_MV}_Releases/${MY_PV}/${MY_PV}.Complete.MyWorkSpace.zip"
+SRC_URI="mirror://sourceforge/project/${PN}/${MY_MV}_Releases/${MY_PV}"
+SRC_URI="${SRC_URI}/${MY_PV}.Complete.MyWorkSpace.zip"
 RESTRICT="primaryuri"
 
 LICENSE="BSD"
@@ -48,15 +49,14 @@ src_unpack() {
 	tar -C "${S}" -xf "${WORKDIR}/BaseTools(Unix).tar" \
 		|| die "Failed to untar base tools"
 	if use doc; then
-		mkdir -p"${S}/doc"
-		unzip -d"${S}/doc" \
-			"${WORKDIR}/Documents/MdeModulePkg Document.zip" \
-			|| die "Failed to unzip documentation"
-		mv "${S}/doc/html" "${S}/doc/MdeModulePkg"
-		unzip -d"${S}/doc" \
-			"${WORKDIR}/Documents/MdePkg Document.zip" \
-			|| die "Failed to unzip documentation"
-		mv "${S}/doc/html" "${S}/doc/MdePkg"
+		mkdir -p "${S}/doc"
+		for f in "${WORKDIR}/Documents/"*" Document.zip"; do
+			DOC_NAME=$(echo ${f} | sed 's@^.*/\([^/]*\) Document.zip$@\1@')
+			unzip -d"${S}/doc" \
+				"${WORKDIR}/Documents/${DOC_NAME} Document.zip" \
+				|| die "Failed to unzip documentation"
+			mv "${S}/doc/html" "${S}/doc/${DOC_NAME}"
+		done
 	fi
 }
 
@@ -164,7 +164,16 @@ LIB_DIR=/usr/lib64/${PF}
 STATIC_LIBRARY_FILES =  \\
 EOF
 
-	perl -ne 'if( m/^STATIC_LIBRARY_FILES\s*=/ ){ $static=1; }elsif( $static ){ if( m!^\s*\$\(BIN_DIR\).*/([^/]*)\.lib! ){ print "\t\"-l${1}\" \\\n" }else{ $static=0; }}' >>${1} <${3}
+	perl -ne \
+'if( m/^STATIC_LIBRARY_FILES\s*=/ ) {
+	$static=1;
+} elsif( $static ) {
+	if( m!^\s*\$\(BIN_DIR\).*/([^/]*)\.lib! ) {
+		print "\t\"-l${1}\" \\\n"
+	} else {
+		$static=0;
+	}
+}' >>${1} <${3}
 
 	cat >>${1} <<EOF
 
