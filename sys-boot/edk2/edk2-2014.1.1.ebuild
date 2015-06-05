@@ -67,17 +67,11 @@ src_prepare() {
 }
 
 src_configure() {
-	sed -i -e "s/^\(TOOL_CHAIN_TAG\s*=\).*\$/\\1 ${toolchain_tag}/" \
-		"${S}/Conf/target.txt" || die "Failed to set tool chain"
-	sed -i -e \
-		"s!^\(ACTIVE_PLATFORM\s*=\).*\$!\\1 MdeModulePkg\\/MdeModulePkg.dsc!" \
-		"${S}/Conf/target.txt" || die "Failed to set platform"
-	sed -i -e \
-		"s/^\(TARGET\s*=\).*\$/\\1 ${compile_mode}/" \
-		"${S}/Conf/target.txt" || die "Failed to set target compile mode"
-	sed -i -e \
-		"s/^\(TARGET_ARCH\s*=\).*\$/\\1 ${ARCH}/" \
-		"${S}/Conf/target.txt" || die "Failed to set target architecture"
+	sed -i -e 's/^\(TOOL_CHAIN_TAG\s*=\).*$/\1 '${toolchain_tag}'/' \
+		-e 's@^\(ACTIVE_PLATFORM\s*=\).*$@\1 MdeModulePkg/MdeModulePkg.dsc@' \
+		-e 's/^\(TARGET\s*=\).*$/\1 '${compile_mode}'/' \
+		-e 's/^\(TARGET_ARCH\s*=\).*$/\1 '${ARCH}'/' \
+		"${S}/Conf/target.txt" || die "Failed to configure target file"
 }
 
 src_compile() {
@@ -102,15 +96,16 @@ src_install() {
 	doins "${S}/BaseTools/Scripts"/gcc*-ld-script
 
 	INCLUDE_DEST="/usr/include/edk2"
-	INCLUDE_DIR="${S}/MdePkg/Include"
 	for f in "" /Uefi /Guid /IndustryStandard /Library /Pi /Protocol; do
 		insinto "${INCLUDE_DEST}${f}"
-		doins "${INCLUDE_DIR}${f}"/*.h
+		doins "${S}/MdePkg/Include${f}"/*.h
 	done
 	insinto "${INCLUDE_DEST}"
-	doins "${INCLUDE_DIR}/${ARCH}"/*.h
-	for f in /MdeModulePkg /IntelFrameworkPkg; do
-		doins -r "${S}/${f}/Include"/*
+	doins "${S}/MdePkg/Include/${ARCH}"/*.h
+	find "${S}" -name 'BaseTools' -prune -o -name 'MdePkg' -prune -o \
+		-type d -name Include -exec find {} -maxdepth 1 \; \
+		| while read hfile; do
+		doins -r "${hfile}"
 	done
 
 	dobin "${S}/BaseTools/Source/C/bin/GenFw"
