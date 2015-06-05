@@ -101,18 +101,16 @@ src_install() {
 	done
 	doins "${S}/BaseTools/Scripts"/gcc*-ld-script
 
-	INCLUDE_DIR="${S}/MdePkg/Include"
 	INCLUDE_DEST="/usr/include/edk2"
-	insinto "${INCLUDE_DEST}"
-	doins "${INCLUDE_DIR}"/*.h "${INCLUDE_DIR}/${ARCH}"/*.h
-	for f in /Uefi /Guid /IndustryStandard /Library /Protocol; do
+	INCLUDE_DIR="${S}/MdePkg/Include"
+	for f in "" /Uefi /Guid /IndustryStandard /Library /Pi /Protocol; do
 		insinto "${INCLUDE_DEST}${f}"
 		doins "${INCLUDE_DIR}${f}"/*.h
 	done
-	INCLUDE_DIR="${S}/MdeModulePkg/Include"
-	for f in /Guid /Library /Ppi /Protocol; do
-		insinto "${INCLUDE_DEST}${f}"
-		doins "${INCLUDE_DIR}${f}"/*.h
+	insinto "${INCLUDE_DEST}"
+	doins "${INCLUDE_DIR}/${ARCH}"/*.h
+	for f in /MdeModulePkg /IntelFrameworkPkg; do
+		doins -r "${S}/${f}/Include"/*
 	done
 
 	dobin "${S}/BaseTools/Source/C/bin/GenFw"
