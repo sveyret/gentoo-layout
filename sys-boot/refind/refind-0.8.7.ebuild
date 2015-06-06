@@ -12,10 +12,10 @@ RESTRICT="primaryuri"
 LICENSE="BSD GPL-2 GPL-3 FDL-1.3"
 SLOT="0"
 KEYWORDS="-* ~amd64"
-IUSE="-gnuefi"
+IUSE="-gnuefi +install"
 
-DEPEND="!gnuefi? ( >=sys-boot/edk2-2014.1.1 )"
-DEPEND="${DEPEND} gnuefi? ( >=sys-boot/gnu-efi-3.0.2 )"
+DEPEND="gnuefi? ( >=sys-boot/gnu-efi-3.0.2 )"
+DEPEND="${DEPEND} !gnuefi? ( >=sys-boot/edk2-2014.1.1 )"
 
 pkg_setup() {
 	export EDK2_VERS="2014.1.1"
@@ -38,6 +38,9 @@ src_configure() {
 			"${f}" || die "Failed to patch Tianocore make file in" \
 			$(basename $(dirname ${f}))
 	done
+	sed -i -e 's@^\(ThisDir\s*=\s*\).*$@\1/usr/lib/'${P}'@' \
+		-e 's@^\(ThisScript\s*=\s*"?\)[^/]*@\1/usr/sbin@' \
+		"${S}/install.sh" || die "Failed to patch installation script"
 }
 
 src_compile() {
@@ -57,6 +60,25 @@ src_compile() {
 }
 
 src_install() {
-	"${S}/install.sh" --root "${D}"
+	newsbin "${S}/install.sh" refind-install
+	insinto "/usr/lib/${P}"
+	doins "${S}/refind"/*.efi
+	doins -r "${S}"/drivers_*
+	doins -r "${S}"/icons
+	doins -r "${S}"/keys
+	doins "${S}"/refind.conf-sample
+}
+
+pkg_postinst() {
+	if use install ; then
+		if /usr/sbin/refind-install; then
+			elog "rEFInd has been installed in your system. It will be active"
+			elog "at next reboot."
+		else
+			eerror "rEFInd could not be properly installed in your system."
+		fi
+	fi
+	elog "You can use the command refind-install in order to install"
+	elog "rEFInd to a given partition."
 }
 
