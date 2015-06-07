@@ -10,10 +10,12 @@
   <use lang="en">
     <flag name="gnuefi">Compile using GNU-EFI instead of Tianocore.</flag>
     <flag name="install">Install rEFInd on the current system.</flag>
+    <flag name="secureboot">Manage secure boot.</flag>
   </use>
   <use lang="fr">
     <flag name="gnuefi">Compiler en utilisant GNU-EFI au lieu de Tianocore.</flag>
     <flag name="install">Installer rEFInd sur le système courant.</flag>
+    <flag name="secureboot">Gère le « secure boot ».</flag>
   </use>
 </pkgmetadata>
 

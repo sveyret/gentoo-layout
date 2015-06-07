@@ -4,6 +4,8 @@
 
 EAPI=5
 
+inherit eutils
+
 DESCRIPTION="rEFInd is an UEFI boot manager"
 HOMEPAGE="http://www.rodsbooks.com/refind/"
 SRC_URI="mirror://sourceforge/project/${PN}/${PV}/${PN}-src-${PV}.zip"
@@ -12,19 +14,26 @@ RESTRICT="primaryuri"
 LICENSE="BSD GPL-2 GPL-3 FDL-1.3"
 SLOT="0"
 KEYWORDS="-* ~amd64"
-IUSE="-gnuefi +install"
+IUSE="-gnuefi +install +secureboot"
 
-DEPEND="gnuefi? ( >=sys-boot/gnu-efi-3.0.2 )"
+DEPEND="sys-boot/efibootmgr sys-block/parted"
+DEPEND="${DEPEND} secureboot? ( app-crypt/sbsigntool )"
+DEPEND="${DEPEND} gnuefi? ( >=sys-boot/gnu-efi-3.0.2 )"
 DEPEND="${DEPEND} !gnuefi? ( >=sys-boot/edk2-2014.1.1 )"
 
 pkg_setup() {
-	export EDK2_VERS="2014.1.1"
-	export ARCH="x86_64"
-	export ARCH_SIZE="64"
-	export EFILIB_DIR="/usr/lib${ARCH_SIZE}/edk2-${EDK2_VERS}"
+	for f in /usr/lib/edk2-*; do # Hope last directory is most recent version
+		export EFILIB_DIR="${f}"
+	done
+	export ARCH=$( uname -m | sed s,i[3456789]86,ia32, )
+	if [[ ${ARCH} == "x86_64" ]] ; then
+		export EFIARCH=x64
+	else
+		export EFIARCH=${ARCH}
+	fi
 }
 
-src_configure() {
+src_prepare() {
 	for f in "${S}/Make.tiano" "${S}"/*/Make.tiano; do
 		sed -i -e 's/^\(EDK2BASE\s*=.*\)$/#\1/' \
 			-e '/^\s*-I \$(EDK2BASE).*$/d' \
@@ -38,9 +47,7 @@ src_configure() {
 			"${f}" || die "Failed to patch Tianocore make file in" \
 			$(basename $(dirname ${f}))
 	done
-	sed -i -e 's@^\(ThisDir\s*=\s*\).*$@\1/usr/lib/'${P}'@' \
-		-e 's@^\(ThisScript\s*=\s*"?\)[^/]*@\1/usr/sbin@' \
-		"${S}/install.sh" || die "Failed to patch installation script"
+	epatch "${FILESDIR}/${PV}-install-symlink.patch"
 }
 
 src_compile() {
@@ -48,37 +55,47 @@ src_compile() {
 	if use gnuefi; then
 		all_target=gnuefi
 	else
-		all_target=all
+		all_target=tiano
 	fi
 	emake ${all_target}
 
 	# Make filesystem drivers
 	use gnuefi && export gnuefi_target="_gnuefi"
-	for d in ext2 ext4 reiserfs iso9660 hfs ntfs; do
+	for d in ext2 ext4 reiserfs iso9660 hfs ntfs; do # btrfs does not compile
 		emake -C "${S}/filesystems" "${d}${gnuefi_target}"
 	done
 }
 
 src_install() {
-	newsbin "${S}/install.sh" refind-install
-	insinto "/usr/lib/${P}"
-	doins "${S}/refind"/*.efi
-	doins -r "${S}"/drivers_*
-	doins -r "${S}"/icons
-	doins -r "${S}"/keys
-	doins "${S}"/refind.conf-sample
+	insinto "/usr/share/${P}/refind"
+	doins "${S}/refind"/refind*.efi
+	doins -r "${S}/drivers_${EFIARCH}"
+	doins "${S}/refind.conf-sample"
+	doins -r "${S}/icons"
+	insinto "/usr/share/${P}/refind/tools_${EFIARCH}"
+	doins "${S}/gptsync/gptsync_${EFIARCH}.efi"
+	insinto "/usr/share/${P}"
+	doins "${S}/install.sh"
+	fperms u+x "/usr/share/${P}/install.sh"
+
+	dohtml -r "${S}/docs"/*
+	dodoc "${S}"/{NEWS.txt,COPYING.txt,LICENSE.txt,README.txt,CREDITS.txt}
+
+	insinto "/etc/refind.d"
+	doins -r "${S}/keys"
+
+	dosbin "${S}/mkrlconf.sh"
+	dosbin "${S}/mvrefind.sh"
+
+	insinto "/usr/share/${P}"
+	doins -r "${S}/banners"
+	doins -r "${S}/fonts"
+	dosym "/usr/share/${P}/install.sh" "/usr/sbin/refind-install"
 }
 
 pkg_postinst() {
-	if use install ; then
-		if /usr/sbin/refind-install; then
-			elog "rEFInd has been installed in your system. It will be active"
-			elog "at next reboot."
-		else
-			eerror "rEFInd could not be properly installed in your system."
-		fi
-	fi
+	use install && "${S}/debian/postinst"
 	elog "You can use the command refind-install in order to install"
-	elog "rEFInd to a given partition."
+	elog "rEFInd to a given device."
 }
 
