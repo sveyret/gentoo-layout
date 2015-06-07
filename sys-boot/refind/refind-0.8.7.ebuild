@@ -78,7 +78,7 @@ src_install() {
 	doins "${S}/install.sh"
 	fperms u+x "/usr/share/${P}/install.sh"
 
-	dohtml -r "${S}/docs"/*
+	use doc && dohtml -r "${S}/docs"/*
 	dodoc "${S}"/{NEWS.txt,COPYING.txt,LICENSE.txt,README.txt,CREDITS.txt}
 
 	insinto "/etc/refind.d"
@@ -95,7 +95,7 @@ src_install() {
 
 pkg_postinst() {
 	use install && "${S}/debian/postinst"
-	elog "You can use the command refind-install in order to install"
-	elog "rEFInd to a given device."
+	elog "You can use the command refind-install in order to install rEFInd to"
+	elog "a given device."
 }
 

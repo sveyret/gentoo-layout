@@ -22,7 +22,7 @@ RESTRICT="primaryuri"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="-* ~amd64"
-IUSE="-debug -doc -examples"
+IUSE="-debug doc examples"
 
 DEPEND="app-arch/unzip dev-lang/nasm"
 
