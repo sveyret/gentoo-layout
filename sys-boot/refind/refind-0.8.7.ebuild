@@ -14,7 +14,7 @@ RESTRICT="primaryuri"
 LICENSE="BSD GPL-2 GPL-3 FDL-1.3"
 SLOT="0"
 KEYWORDS="-* ~amd64"
-IUSE="-gnuefi +install +secureboot"
+IUSE="-gnuefi +install +secureboot doc"
 
 DEPEND="sys-boot/efibootmgr sys-block/parted"
 DEPEND="${DEPEND} secureboot? ( app-crypt/sbsigntool )"
