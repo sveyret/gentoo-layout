@@ -21,7 +21,7 @@ RESTRICT="primaryuri"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="-* ~amd64"
+KEYWORDS="-* ~amd64 ~x86"
 IUSE="-debug doc examples"
 
 DEPEND="app-arch/unzip dev-lang/nasm"
@@ -35,9 +35,19 @@ pkg_setup() {
 	GCC_VERS=$(gcc --version | head -1 | sed "s/.*)//")
 	GCC_VERS=$(get_version_component_range 1-2 ${GCC_VERS})
 	GCC_VERS=$(delete_all_version_separators ${GCC_VERS})
-	export toolchain_tag="GCC${GCC_VERS}"
-	export ARCH="X64"
-	export ARCH_SIZE="64"
+	if [[ ${GCC_VERS} -lt 44 ]] || [[ ${GCC_VERS} -gt 49 ]]; then
+		export toolchain_tag="ELFGCC"
+	else
+		export toolchain_tag="GCC${GCC_VERS}"
+	fi
+	UNAME_ARCH=$( uname -m | sed s,i[3456789]86,IA32, )
+	if [[ ${UNAME_ARCH} == "x86_64" ]] ; then
+		export ARCH=X64
+		export arch_size="64"
+	else
+		export ARCH=${UNAME_ARCH}
+		export arch_size="32"
+	fi
 	use debug && export compile_mode="DEBUG" || export compile_mode="RELEASE"
 }
 
@@ -89,7 +99,7 @@ src_compile() {
 src_install() {
 	BUILD_DIR="${S}/Build/MdeModule/${compile_mode}_${toolchain_tag}/${ARCH}"
 
-	insinto "/usr/lib${ARCH_SIZE}/${PF}"
+	insinto "/usr/lib${arch_size}/${PF}"
 	for f in "${BUILD_DIR}/MdePkg/Library"/*/*/OUTPUT/*.lib; do
 		newins "${f}" lib$(basename "${f}" .lib).a
 	done

@@ -15,7 +15,7 @@ LICENSE="GPL-2"
 SLOT="0"
 IUSE=""
 
-KEYWORDS="~amd64"
+KEYWORDS="-* ~amd64 ~x86"
 
 RDEPEND=">=x11-libs/wxGTK-3.0.0.0 net-libs/libssh"
 DEPEND="${RDEPEND}"
@@ -26,4 +26,4 @@ src_prepare() {
 	sed -i -e 's/\(\s\+\)\(\S\+icon-theme\.cache\)/\1\\$ENV{DESTDIR}\/\2/' \
 		"${S}/LiteEditor/CMakeLists.txt" || die "Failed to patch source"
 }
-#$ENV{DESTDIR}
+

@@ -13,13 +13,14 @@ RESTRICT="primaryuri"
 
 LICENSE="BSD GPL-2 GPL-3 FDL-1.3"
 SLOT="0"
-KEYWORDS="-* ~amd64"
+KEYWORDS="-* ~amd64 ~x86"
 IUSE="-gnuefi +install +secureboot doc"
 
 DEPEND="sys-boot/efibootmgr sys-block/parted"
 DEPEND="${DEPEND} secureboot? ( app-crypt/sbsigntool )"
 DEPEND="${DEPEND} gnuefi? ( >=sys-boot/gnu-efi-3.0.2 )"
 DEPEND="${DEPEND} !gnuefi? ( >=sys-boot/edk2-2014.1.1 )"
+RDEPEND="${DEPEND}"
 
 pkg_setup() {
 	for f in /usr/lib/edk2-*; do # Hope last directory is most recent version
