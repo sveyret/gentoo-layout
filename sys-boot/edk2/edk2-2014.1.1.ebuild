@@ -113,9 +113,9 @@ src_install() {
 	insinto "${INCLUDE_DEST}"
 	doins "${S}/MdePkg/Include/${ARCH}"/*.h
 	find "${S}" -name 'BaseTools' -prune -o -name 'MdePkg' -prune -o \
-		-type d -name Include -exec find {} -maxdepth 1 \; \
+		-type d -name Include -exec find {} -maxdepth 0 \; \
 		| while read hfile; do
-		doins -r "${hfile}"
+		doins -r "${hfile}"/*
 	done
 
 	dobin "${S}/BaseTools/Source/C/bin/GenFw"
