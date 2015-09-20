@@ -22,8 +22,3 @@ DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/${PN}-${MY_VERSION}"
 
-src_prepare() {
-	sed -i -e 's/\(\s\+\)\(\S\+icon-theme\.cache\)/\1\\$ENV{DESTDIR}\/\2/' \
-		"${S}/LiteEditor/CMakeLists.txt" || die "Failed to patch source"
-}
-

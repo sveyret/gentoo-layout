@@ -17,7 +17,7 @@ IUSE=""
 
 KEYWORDS="-* ~amd64 ~x86"
 
-RDEPEND=">=x11-libs/wxGTK-3.0.0.0 net-libs/libssh"
+RDEPEND=">=x11-libs/wxGTK-3.0.0.0:3.0 net-libs/libssh"
 DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/${PN}-${MY_VERSION}"
