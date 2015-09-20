@@ -17,8 +17,26 @@ IUSE=""
 
 KEYWORDS="-* ~amd64 ~x86"
 
-RDEPEND=">=x11-libs/wxGTK-3.0.0.0:3.0 net-libs/libssh"
+RDEPEND=">=x11-libs/wxGTK-3.0.0 net-libs/libssh"
 DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/${PN}-${MY_VERSION}"
+
+pkg_setup() {
+	WXCONFIG=$(which wx-config)
+	[[ -z ${WXCONFIG} ]] && \
+		die "wx-config tool not found in path. Compilation cannot proceed."
+	WXVERSION=$(${WXCONFIG} --version)
+	if [[ $(get_major_version ${WXVERSION}) -lt 3 ]]; then
+		eerror "Current version of wxWidgets is ${WXVERSION} while codelite"
+		eerror "requires at least version 3.0.0."
+		eerror "Please run the following command in order to list available"
+		eerror "versions:"
+		eerror "  eselect wxwidgets list"
+		eerror "and the following command to select a suitable version:"
+		eerror "  eselect wxwidgets set <number>"
+		eerror
+		die "You need to select suitable version for wxWidgets"
+	fi
+}
 
