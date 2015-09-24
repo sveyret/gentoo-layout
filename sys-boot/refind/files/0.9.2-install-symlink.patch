@@ -1,0 +1,22 @@
+diff --git a/install.sh b/install.sh
+index 3a2cffc..60cea04 100755
+--- a/install.sh
++++ b/install.sh
+@@ -1109,9 +1109,15 @@ InstallOnLinux() {
+ #
+ OSName=`uname -s`
+ GetParams "$@"
+-ThisDir="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
++ThisScript="${BASH_SOURCE[0]}"
++while [ -h "$ThisScript" ]; do
++  ThisDir="$( cd -P "$( dirname "$ThisScript" )" && pwd )"
++  ThisScript="$(readlink "$ThisScript")"
++  [[ $ThisScript != /* ]] && ThisScript="$ThisDir/$ThisScript"
++done
++ThisDir="$( cd -P "$( dirname "$ThisScript" )" && pwd )"
++ThisScript="$ThisDir/`basename $ThisScript`"
+ RefindDir="$ThisDir/refind"
+-ThisScript="$ThisDir/`basename $0`"
+ if [[ `whoami` != "root" ]] ; then
+    echo "Not running as root; attempting to elevate privileges via sudo...."
+    sudo "$ThisScript" "$@"
