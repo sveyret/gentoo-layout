@@ -88,7 +88,6 @@ src_install() {
 	if use doc; then
 		doman "${S}/docs/man/"*
 		dodoc -r ${DOCS}
-		docompress -x /usr/share/doc/${PF}/refind.conf-sample
 	fi
 
 	insinto "/usr/share/${P}/refind"
