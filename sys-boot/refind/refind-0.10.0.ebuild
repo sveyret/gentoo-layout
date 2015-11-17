@@ -13,15 +13,12 @@ SRC_URI="mirror://sourceforge/project/${PN}/${PV}/${PN}-src-${PV}.tar.gz"
 
 LICENSE="BSD GPL-2 GPL-3 FDL-1.3"
 SLOT="0"
-KEYWORDS="-* ~amd64 ~x86"
+KEYWORDS="~amd64 ~x86"
 FS_USE="btrfs +ext2 +ext4 hfs +iso9660 ntfs reiserfs"
-IUSE="${FS_USE} -gnuefi +secureboot doc"
+IUSE="${FS_USE} -gnuefi doc"
 
-DEPEND="sys-boot/efibootmgr sys-block/parted"
-DEPEND="${DEPEND} secureboot? ( app-crypt/sbsigntool )"
-DEPEND="${DEPEND} gnuefi? ( >=sys-boot/gnu-efi-3.0.2 )"
-DEPEND="${DEPEND} !gnuefi? ( >=sys-boot/edk2-2014.1.1 )"
-RDEPEND="${DEPEND}"
+DEPEND="gnuefi? ( >=sys-boot/gnu-efi-3.0.2 )
+	!gnuefi? ( >=sys-boot/edk2-2014.1.1 )"
 
 DOCS="NEWS.txt README.txt docs/refind docs/Styles"
 
@@ -36,7 +33,13 @@ pkg_setup() {
 		export EFIARCH=x64
 		export BUILDARCH=x86_64
 	else
-		die "Unsupported architecture"
+		# Try to support anyway
+		export BUILDARCH=$( uname -m | sed s,i[3456789]86,ia32, )
+		if [[ ${BUILDARCH} == "x86_64" ]] ; then
+			export EFIARCH=x64
+		else
+			export EFIARCH=${ARCH}
+		fi
 	fi
 }
 
@@ -54,6 +57,7 @@ src_prepare() {
 			"${f}" || die "Failed to patch Tianocore make file in" \
 			$(basename $(dirname ${f}))
 	done
+	# Make refind-install "symlink-proof"
 	epatch "${FILESDIR}/${PV}-refind-install-symlink.patch"
 }
 
@@ -91,8 +95,7 @@ src_install() {
 	fi
 
 	insinto "/usr/share/${P}/refind"
-	use x86 && doins "${S}/refind/refind_ia32.efi"
-	use amd64 && doins "${S}/refind/refind_x64.efi"
+	doins "${S}/refind/refind_${EFIARCH}.efi"
 	doins -r "${S}/drivers_${EFIARCH}"
 	doins "${S}/refind.conf-sample"
 	doins -r images icons fonts banners
@@ -112,6 +115,11 @@ pkg_postinst() {
 	elog "You will need to use the command 'refind-install' to install"
 	elog "the binaries into your EFI System Partition"
 	if [[ -z "${REPLACING_VERSIONS}" ]]; then
+		elog ""
+		elog "refind-install requires additional packages to be fully functional:"
+		elog " app-crypt/sbsigntool for binary signing for use with SecureBoot"
+		elog " sys-boot/efibootmgr for writing to NVRAM"
+		elog " sys-block/parted for automatic ESP location and mount"
 		elog ""
 		elog "A sample configuration can be found at"
 		elog "/usr/share/${P}/refind/refind.conf-sample"
