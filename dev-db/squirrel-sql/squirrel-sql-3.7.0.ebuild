@@ -1,4 +1,4 @@
-# Copyright 1999-2015 Gentoo Foundation
+# Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
@@ -15,9 +15,9 @@ RESTRICT="primaryuri"
 LICENSE="LGPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="firebird informix mssql mysql oracle postgres sybase"
+IUSE="firebird mssql mysql oracle postgres sybase"
 
-DEPEND=">=virtual/jdk-1.6"
+DEPEND=">=virtual/jdk-1.6:*"
 RDEPEND="
 	${DEPEND}
 	dev-java/log4j
@@ -25,7 +25,6 @@ RDEPEND="
 	mysql? ( dev-java/jdbc-mysql )
 	mssql? ( dev-java/jdbc-mssqlserver )
 	sybase? ( dev-java/jtds )
-	informix? ( dev-java/jdbc-informix )
 	firebird? ( dev-java/jdbc-jaybird )
 	oracle? ( dev-java/jdbc-oracle-bin )
 "
@@ -66,7 +65,7 @@ src_install() {
 		}
 	done
 
-	java-pkg_dolauncher "${PN}" --main net.sourceforge.squirrel_sql.client.Main --java_args "-splash:${squirrel_dir}/icons/splash.jpg" --pkg_args 
-"--log-config-file ${squirrel_dir}/log4j.properties --squirrel-home ${squirrel_dir}" --pwd "${squirrel_dir}"
+	java-pkg_dolauncher "${PN}" --main net.sourceforge.squirrel_sql.client.Main --java_args "-splash:${squirrel_dir}/icons/splash.jpg" \
+		--pkg_args "--log-config-file ${squirrel_dir}/log4j.properties --squirrel-home ${squirrel_dir}" --pwd "${squirrel_dir}"
 	make_desktop_entry "${PN}" "SQuirreL SQL" "${squirrel_dir}/icons/acorn.png" "Development"
 }

@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer>
+    <email>sveyret@gmail.com</email>
+    <name>Stéphane Veyret</name>
+  </maintainer>
+  <longdescription lang="en">
+    SQuirreL SQL Client is a graphical Java program that will allow you to view
+    the structure of a JDBC compliant database, browse the data in tables, issue
+    SQL commands, etc.
+  </longdescription>
+  <longdescription lang="fr">
+    Le client SQuirreL SQL est un programme Java graphique qui vous permettra de
+    voir la structure d'une base compatible JDBC, inspecter les données dans les
+    tables, exécuter des commandes SQL, etc.
+  </longdescription>
+</pkgmetadata>

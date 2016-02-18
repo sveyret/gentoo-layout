@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer>
+    <email>sveyret@gmail.com</email>
+    <name>Stéphane Veyret</name>
+  </maintainer>
+  <longdescription lang="en">
+    The Most Intelligent Java IDE.
+  </longdescription>
+  <longdescription lang="fr">
+    Le plus intelligent de EDI Java.
+  </longdescription>
+</pkgmetadata>

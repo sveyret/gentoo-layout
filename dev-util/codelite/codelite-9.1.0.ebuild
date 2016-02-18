@@ -1,11 +1,13 @@
-# Copyright 1999-2015 Gentoo Foundation
+# Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
+# $Id$
 
 EAPI=5
 
-inherit versionator cmake-utils
+inherit versionator cmake-utils wxwidgets
 
+DESCRIPTION="A Free, open source, cross platform C, C++, PHP and Node.js IDE"
+HOMEPAGE="http://codelite.org/"
 MY_GIT_SITE="https://codeload.github.com/eranif"
 [[ $(get_version_component_range 3) -eq 0 ]] && MY_VERSION=$(get_version_component_range 1-2)
 MY_VERSION=$(replace_version_separator 2 '-' "${MY_VERSION}")
@@ -23,20 +25,6 @@ DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/${PN}-${MY_VERSION}"
 
-pkg_setup() {
-	WXCONFIG=$(which wx-config)
-	[[ -z ${WXCONFIG} ]] && \
-		die "wx-config tool not found in path. Compilation cannot proceed."
-	WXVERSION=$(${WXCONFIG} --version)
-	if [[ $(get_major_version ${WXVERSION}) -lt 3 ]]; then
-		eerror "Current version of wxWidgets is ${WXVERSION} while codelite"
-		eerror "requires at least version 3.0.0."
-		eerror "Please run the following command in order to list available"
-		eerror "versions:"
-		eerror "  eselect wxwidgets list"
-		eerror "and the following command to select a suitable version:"
-		eerror "  eselect wxwidgets set <number>"
-		eerror
-		die "You need to select suitable version for wxWidgets"
-	fi
+src_prepare() {
+	WX_GTK_VER=3.0 need-wxwidgets unicode
 }
