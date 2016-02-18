@@ -66,10 +66,7 @@ src_install() {
 		}
 	done
 
-	use postgres && (
-		java-pkg_regjar plugins/postgres/lib/postgis-jdbc-1.3.3.jar
-	)
-
 	java-pkg_dolauncher "${PN}" --main net.sourceforge.squirrel_sql.client.Main --java_args "-splash:${squirrel_dir}/icons/splash.jpg" --pkg_args 
 "--log-config-file ${squirrel_dir}/log4j.properties --squirrel-home ${squirrel_dir}" --pwd "${squirrel_dir}"
+	make_desktop_entry "${PN}" "SQuirreL SQL" "${squirrel_dir}/icons/acorn.png" "Development"
 }
