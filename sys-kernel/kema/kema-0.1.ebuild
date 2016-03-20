@@ -1,4 +1,4 @@
-# Copyright 1999-2015 Gentoo Foundation
+# Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
@@ -20,12 +20,12 @@ for lang in ${KEMA_LANG}; do
 done
 
 src_install() {
-	newsbin sbin/kema
-	exeinto "/usr/libexec/${P}"
-	newexe usr/libexec/kema-*
-	exeinto "/usr/libexec/${P}/bootloader"
-	newexe usr/libexec/bootloader/*
-	dodir "var/lib/${P}"
+	dosbin sbin/kema
+	exeinto "/usr/libexec/${PN}"
+	doexe "usr/libexec/${PN}/kema-"*
+	exeinto "/usr/libexec/${PN}/bootloader"
+	doexe "usr/libexec/${PN}/bootloader/"*
+	dodir "var/lib/${PN}"
 
 	# Install language pack
 	for lang in ${KEMA_LANG}; do
