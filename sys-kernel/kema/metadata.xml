@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription lang="en">
+		The Gentoo kernel manager
+	</longdescription>
+	<longdescription lang="fr">
+		Le gestionnaire de noyau pour Gentoo
+	</longdescription>
+</pkgmetadata>
+
