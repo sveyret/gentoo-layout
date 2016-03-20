@@ -20,7 +20,7 @@ for lang in ${KEMA_LANG}; do
 done
 
 src_install() {
-	dosbin sbin/kema
+	dosbin "usr/sbin/kema"
 	exeinto "/usr/libexec/${PN}"
 	doexe "usr/libexec/${PN}/kema-"*
 	exeinto "/usr/libexec/${PN}/bootloader"
