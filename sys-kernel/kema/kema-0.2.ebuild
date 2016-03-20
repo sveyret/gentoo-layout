@@ -21,10 +21,12 @@ done
 
 src_install() {
 	dosbin "usr/sbin/kema"
-	exeinto "/usr/libexec/${PN}"
-	doexe "usr/libexec/${PN}/kema-"*
-	exeinto "/usr/libexec/${PN}/bootloader"
-	doexe "usr/libexec/${PN}/bootloader/"*
+	insinto "/usr/libexec/${PN}"
+	doins "usr/libexec/${PN}/kema-"*
+	insinto "/usr/libexec/${PN}/bootloader"
+	doins "usr/libexec/${PN}/bootloader/"*
+	insinto "/etc/${PN}"
+	doins "etc/${PN}/"*
 	dodir "var/lib/${PN}"
 
 	# Install language pack
