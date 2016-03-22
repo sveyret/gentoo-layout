@@ -4,13 +4,19 @@
 
 EAPI=5
 
-inherit versionator
+inherit versionator toolchain-funcs
 
-DESCRIPTION="Tianocore UEFI Standard library"
-HOMEPAGE="http://www.tianocore.org/eadk/"
+DESCRIPTION="Tianocore UEFI development kit"
+HOMEPAGE="http://www.tianocore.org/edk2/"
+MY_MV=$(get_version_component_range 1)
+MY_MV="UDK${MY_MV}"
+MY_SP=$(get_version_component_range 2)
+[[ -z "${MY_SP}" ]] || MY_SP=".SP${MY_SP}"
+MY_P=$(get_version_component_range 3)
+[[ -z "${MY_P}" ]] || MY_P=".P${MY_P}"
+MY_PV="${MY_MV}${MY_SP}${MY_P}"
 SRC_URI="mirror://sourceforge/project/${PN}/${MY_MV}_Releases/${MY_PV}"
 SRC_URI="${SRC_URI}/${MY_PV}.Complete.MyWorkSpace.zip"
-http://freefr.dl.sourceforge.net/project/edk2/EDK%20II%20Releases/EADK/EADK_1.02/EadkPkg_B1.02_Release.zip
 RESTRICT="primaryuri"
 
 LICENSE="BSD"
@@ -112,13 +118,10 @@ src_install() {
 		insinto "${INCLUDE_DEST}${f}"
 		doins "${S}/MdePkg/Include${f}"/*.h
 	done
-	insinto "${INCLUDE_DEST}/CryptoPkg"
-	doins -r "${S}/CryptoPkg/Include"/*
 	insinto "${INCLUDE_DEST}"
 	doins "${S}/MdePkg/Include/${ARCH}"/*.h
 	find "${S}" -name 'BaseTools' -prune -o -name 'MdePkg' -prune -o \
-		-name 'CryptoPkg' -prune -o -type d -name Include \
-		-exec find {} -maxdepth 0 \; \
+		-type d -name Include -exec find {} -maxdepth 0 \; \
 		| while read hfile; do
 		doins -r "${hfile}"/*
 	done
