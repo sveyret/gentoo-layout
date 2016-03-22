@@ -41,7 +41,7 @@ HOMEPAGE="http://jetbrains.com/idea/"
 SRC_URI="http://download.jetbrains.com/${MY_PN}/${MY_PN}IC-${MY_PV}.tar.gz"
 LICENSE="Apache-2.0"
 IUSE=""
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="amd64 x86"
 S="${WORKDIR}/${MY_PN}-IC-${MY_VERSION_STRING}"
 
 src_prepare() {
