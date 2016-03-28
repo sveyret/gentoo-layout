@@ -11,7 +11,7 @@ SRC_URI="https://github.com/sveyret/${PN}/archive/v${PV}.tar.gz"
 
 LICENSE="GPL-3"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 KEMA_LANG="en en_US fr"
 IUSE=""
 
