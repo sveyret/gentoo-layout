@@ -8,8 +8,9 @@ inherit eutils versionator
 SLOT="0"
 RDEPEND=">=virtual/jdk-1.7"
 
-MY_VERSION_STRING="$(get_version_component_range 3-5)"
-MY_PV="$(get_version_component_range 1-2)"
+MY_VERSION_STRING="$(get_version_component_range 4-6)"
+MY_PV="$(get_version_component_range 1-3)"
+[[ $(get_version_component_range 3) -eq 0 ]] && MY_PV=$(get_version_component_range 1-2)
 MY_PN="idea"
 
 RESTRICT="strip"
