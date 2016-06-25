@@ -219,6 +219,7 @@ EOF
 	grep -e '^DLINK\s*=' ${3} >>${1}
 	grep -e '^OBJCOPY\s*=' ${3} >>${1}
 	grep -e '^GENFW\s*=' ${3} >>${1}
+	[[ $ARCH == X64 ]] && PECOFF_HEADER_SIZE='0x228' || PECOFF_HEADER_SIZE='0x220'
 	cat >>${1} <<EOF
 
 CC_FLAGS = -g -fshort-wchar -fno-strict-aliasing -Wall -Werror \
@@ -229,7 +230,7 @@ CC_FLAGS = -g -fshort-wchar -fno-strict-aliasing -Wall -Werror \
 -Wno-unused-but-set-variable
 DLINK_FLAGS=-nostdlib -n -q --gc-sections --entry \$(IMAGE_ENTRY_POINT) \
 -u \$(IMAGE_ENTRY_POINT) -melf_x86_64 --oformat=elf64-x86-64 -L \$(LIB_DIR) \
---script=\$(EFI_LDS) --defsym=PECOFF_HEADER_SIZE=0x228
+--script=\$(EFI_LDS) --defsym=PECOFF_HEADER_SIZE=${PECOFF_HEADER_SIZE}
 EOF
 	grep -e '^OBJCOPY_FLAGS\s*=' ${3} >>${1}
 	grep -e '^GENFW_FLAGS\s*=' ${3} >>${1}
