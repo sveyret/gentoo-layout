@@ -4,7 +4,7 @@
 
 EAPI=6
 
-inherit eutils
+inherit eutils toolchain-funcs flag-o-matic
 
 DESCRIPTION="The rEFInd UEFI Boot Manager by Rod Smith"
 HOMEPAGE="http://www.rodsbooks.com/refind/"
@@ -42,15 +42,10 @@ pkg_setup() {
 
 src_prepare() {
 	eapply_user
-	[[ $EFIARCH == x64 ]] && PECOFF_HEADER_SIZE='0x228' || PECOFF_HEADER_SIZE='0x220'
-	for f in "${S}/Make.common" "${S}"/*/Make.tiano; do
-		sed -i -e 's/^\(EDK2BASE\s*=.*\)$/#\1/' \
-			-e 's/^\(include .*target.txt.*\)$/#\1/' \
-			-e '/^\s*-I \$(EDK2BASE).*$/d' \
+	for f in "${S}"/*/Make.tiano "${S}"/Make.common; do
+		sed -i -e 's/^\(include .*target.txt.*\)$/#\1/' \
 			-e 's@^\(TIANO_INCLUDE_DIRS\s*=\s*-I\s*\).*$@\1/usr/include/udk \\@' \
-			-e 's/^\(GENFW\s*=\s*\).*$/\1\$(prefix)GenFw/' \
-			-e 's@\$(EDK2BASE)/BaseTools/Scripts/gcc4.4-ld-script@/usr/lib/GccBase.lds@' \
-			-e 's/^\(TIANO_LDFLAGS\s*=.*\)\\$/\1--defsym=PECOFF_HEADER_SIZE='${PECOFF_HEADER_SIZE}' \\/' \
+			-e '/^\s*-I \$(EDK2BASE).*$/d' \
 			"${f}" || die "Failed to patch Tianocore make file in" \
 			$(basename $(dirname ${f}))
 	done
@@ -61,6 +56,7 @@ src_prepare() {
 			"${f}" || die "Failed to patch Tianocore make file in" \
 			$(basename $(dirname ${f}))
 	done
+	sed -i -e '/Guids/i#include "AutoGen.h"\n' "${S}/filesystems/AutoGen.c"
 	for f in "${S}"/*/AutoGen.c; do
 		cat >>"${f}" <<EOF
 
@@ -77,9 +73,35 @@ EOF
 }
 
 src_compile() {
+	# Prepare flags
+	[[ $EFIARCH == x64 ]] && pecoff_header_size='0x228' \
+		|| pecoff_header_size='0x220'
+
+	append-cflags "-fno-strict-aliasing" "-fno-stack-protector" "-fshort-wchar" "-Wall"
+
+	local make_flags=(
+		ARCH="${BUILDARCH}"
+		GENFW="/usr/bin/GenFw"
+		CC="$(tc-getCC)"
+		AS="$(tc-getAS)"
+		LD="$(tc-getLD)"
+		AR="$(tc-getAR)"
+		RANLIB="$(tc-getRANLIB)"
+		OBJCOPY="$(tc-getOBJCOPY)"
+		#CFLAGS="${CFLAGS}"
+		LDFLAGS="${LDFLAGS}"
+		GNUEFI_LDFLAGS="-T \$(GNUEFI_LDSCRIPT) -shared -nostdlib -Bsymbolic \
+			-L\$(EFILIB) -L\$(GNUEFILIB) \$(CRTOBJS) -znocombreloc -zdefs"
+		TIANO_LDSCRIPT="/usr/lib/GccBase.lds"
+		TIANO_LDFLAGS="-n -q --gc-sections -nostdlib \
+			--script=\$(TIANO_LDSCRIPT) \
+			--defsym=PECOFF_HEADER_SIZE=${pecoff_header_size} \
+			--entry \$(ENTRYPOINT) -u \$(ENTRYPOINT) -m \$(LD_CODE)"
+	)
+
 	# Make main EFI
 	use gnuefi && export all_target=gnuefi || export all_target=tiano
-	emake ARCH=${BUILDARCH} ${all_target}
+	emake "${make_flags[@]}" ${all_target}
 
 	# Make filesystem drivers
 	use gnuefi && export gnuefi_target="_gnuefi"
@@ -87,7 +109,7 @@ src_compile() {
 		fs=${fs#+}
 		if use "${fs}"; then
 			einfo "Building ${fs} filesystem driver"
-			emake -C "${S}/filesystems" ARCH=${BUILDARCH} ${fs}${gnuefi_target}
+			emake "${make_flags[@]}" -C "${S}/filesystems" ${fs}${gnuefi_target}
 		fi
 	done
 }
