@@ -88,7 +88,7 @@ src_compile() {
 		AR="$(tc-getAR)"
 		RANLIB="$(tc-getRANLIB)"
 		OBJCOPY="$(tc-getOBJCOPY)"
-		#CFLAGS="${CFLAGS}"
+		CFLAGS="${CFLAGS}"
 		LDFLAGS="${LDFLAGS}"
 		GNUEFI_LDFLAGS="-T \$(GNUEFI_LDSCRIPT) -shared -nostdlib -Bsymbolic \
 			-L\$(EFILIB) -L\$(GNUEFILIB) \$(CRTOBJS) -znocombreloc -zdefs"

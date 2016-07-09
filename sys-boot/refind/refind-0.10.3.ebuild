@@ -88,7 +88,7 @@ src_compile() {
 		AR="$(tc-getAR)"
 		RANLIB="$(tc-getRANLIB)"
 		OBJCOPY="$(tc-getOBJCOPY)"
-		#CFLAGS="${CFLAGS}"
+		CFLAGS="${CFLAGS}"
 		LDFLAGS="${LDFLAGS}"
 		GNUEFI_LDFLAGS="-T \$(GNUEFI_LDSCRIPT) -shared -nostdlib -Bsymbolic \
 			-L\$(EFILIB) -L\$(GNUEFILIB) \$(CRTOBJS) -znocombreloc -zdefs"
@@ -163,7 +163,7 @@ pkg_postinst() {
 	else
 		local last_version=$(version_sort "${REPLACING_VERSIONS}")
 		local last_version=last_version[-1]
-		if version_is_at_least "0.10.3" "${last_version}"; then
+		if ! version_is_at_least "0.10.3" "${last_version}"; then
 			elog "The new refind-mkdefault script requires >=dev-lang/python-3"
 			elog "to be installed"
 			elog ""
