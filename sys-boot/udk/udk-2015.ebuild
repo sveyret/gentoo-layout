@@ -17,7 +17,7 @@ SRC_URI="https://github.com/tianocore/${PN}/releases/download/${MY_V}/${MY_V}.Co
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="debug doc examples"
+IUSE="doc examples"
 
 DEPEND="app-arch/unzip
 	dev-lang/nasm
@@ -33,8 +33,6 @@ pkg_setup() {
 	else
 		export ARCH=${UNAME_ARCH}
 	fi
-
-	use debug && export COMPILE_MODE="DEBUG" || export COMPILE_MODE="RELEASE"
 
 	# We will create a custom toolchain with user defined settings
 	export TOOLCHAIN_TAG="CUSTOM"
@@ -102,7 +100,7 @@ src_configure() {
 	fi
 	append-ldflags -nostdlib -n -q --gc-sections
 	sed -e "s:^\(ACTIVE_PLATFORM\s*=\).*$:\1 MdeModulePkg/MdeModulePkg.dsc:" \
-		-e "s:^\(TARGET\s*=\).*$:\1 ${COMPILE_MODE}:" \
+		-e "s:^\(TARGET\s*=\).*$:\1 RELEASE:" \
 		-e "s:^\(TARGET_ARCH\s*=\).*$:\1 ${ARCH}:" \
 		-e "s:^\(TOOL_CHAIN_TAG\s*=\).*$:\1 ${TOOLCHAIN_TAG}:" \
 		-e "s:^\(MAX_CONCURRENT_THREAD_NUMBER\s*=\).*$:\1 $(makeopts_jobs):" \
@@ -162,7 +160,7 @@ src_compile() {
 }
 
 src_install() {
-	local build_dir="${S}/Build/MdeModule/${COMPILE_MODE}_${TOOLCHAIN_TAG}/${ARCH}"
+	local build_dir="${S}/Build/MdeModule/RELEASE_${TOOLCHAIN_TAG}/${ARCH}"
 
 	for f in "${build_dir}"/*/Library/*/*/OUTPUT/*.lib; do
 		newlib.a "${f}" lib$(basename "${f}" .lib).a

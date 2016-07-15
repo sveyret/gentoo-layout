@@ -10,12 +10,10 @@
 	des fichiers d'en-tête Linux classiques.
   </longdescription>
   <use lang="en">
-    <flag name="debug">Compile libraries with debug information.</flag>
     <flag name="doc">Install EDK2 documentation.</flag>
     <flag name="examples">Install usage examples.</flag>
   </use>
   <use lang="fr">
-    <flag name="debug">Compile les bibliothèques avec les information de déboggage.</flag>
     <flag name="doc">Installe la documentation EDK2.</flag>
     <flag name="examples">Installe les exemples d'utilisation.</flag>
   </use>
