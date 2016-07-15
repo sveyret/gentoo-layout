@@ -7,7 +7,7 @@ EAPI=6
 PYTHON_COMPAT=( python2_7 )
 PYTHON_REQ_USE="sqlite"
 
-inherit multiprocessing python-single-r1 versionator
+inherit flag-o-matic multiprocessing python-single-r1 toolchain-funcs versionator
 
 DESCRIPTION="Tianocore UEFI Development kit"
 HOMEPAGE="http://www.tianocore.org/edk2/"
@@ -17,91 +17,164 @@ SRC_URI="https://github.com/tianocore/${PN}/releases/download/${MY_V}/${MY_V}.Co
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="-debug doc examples"
+IUSE="debug doc examples"
 
-DEPEND="app-arch/unzip dev-lang/nasm ${PYTHON_DEPS}"
+DEPEND="app-arch/unzip
+	dev-lang/nasm
+	${PYTHON_DEPS}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 S="${WORKDIR}/MyWorkSpace"
 
 pkg_setup() {
-	UNAME_ARCH=$(uname -m | perl -pe 's@i[3456789]86@IA32@' )
+	UNAME_ARCH=$(uname -m | sed -e 's:i[3456789]86:IA32:')
 	if [[ ${UNAME_ARCH} == "x86_64" ]] || [[ ${UNAME_ARCH} == "amd64" ]] ; then
 		export ARCH=X64
 	else
 		export ARCH=${UNAME_ARCH}
 	fi
+
 	use debug && export COMPILE_MODE="DEBUG" || export COMPILE_MODE="RELEASE"
-	GCC_VERS=$(gcc --version | head -1 | sed "s/.*)//")
-	GCC_VERS=$(get_version_component_range 1-2 ${GCC_VERS})
-	GCC_VERS=$(delete_all_version_separators ${GCC_VERS})
-	if [[ ${GCC_VERS} -lt 44 ]] || [[ ${GCC_VERS} -gt 49 ]]; then
-		export TOOLCHAIN_TAG="ELFGCC"
-	else
-		export TOOLCHAIN_TAG="GCC${GCC_VERS}"
-	fi
+
+	# We will create a custom toolchain with user defined settings
+	export TOOLCHAIN_TAG="CUSTOM"
 }
 
 src_unpack() {
 	unpack ${A}
 	unpack "${WORKDIR}/${MY_V}.MyWorkSpace.zip"
-	pushd "${S}"
-	unpack "${WORKDIR}/BaseTools(Unix).tar"
-	if use doc; then
-		mkdir -p "${S}/doc"
-		cd "${S}/doc"
-		for f in "${WORKDIR}/Documents/"*" Document.zip"; do
-			DOC_NAME=$(echo ${f} | perl -pe 's@^.*/([^/]*) Document.zip$@\1@')
-			unpack "${WORKDIR}/Documents/${DOC_NAME} Document.zip"
-			mv "${S}/doc/html" "${S}/doc/${DOC_NAME}"
-		done
-	fi
-	popd
-}
 
-src_prepare() {
-	eapply_user
-	python_setup 'python2.7'
-	# Base tools does not like parallel make
-	emake -j1 -C BaseTools
-	. edksetup.sh BaseTools
+	pushd "${S}" || die
+	unpack "${WORKDIR}/BaseTools(Unix).tar"
+
+	local doc_name
+	if use doc; then
+		mkdir -p "${S}/doc" || die
+		pushd "${S}/doc" >/dev/null || die
+		for f in "${WORKDIR}/Documents/"*" Document.zip"; do
+			doc_name=$(echo ${f} | sed -e 's:^.*/([^/]*) Document.zip$:\1:')
+			if [[ -f "${WORKDIR}/Documents/${doc_name} Document.zip" ]]; then
+				unpack "${WORKDIR}/Documents/${doc_name} Document.zip"
+				mv "${S}/doc/html" "${S}/doc/${doc_name}" || die
+			fi
+		done
+		popd >/dev/null || die
+	fi
+
+	popd >/dev/null || die
 }
 
 src_configure() {
-	perl -i -pe 's@^(ACTIVE_PLATFORM\s*=).*$@\1 MdeModulePkg/MdeModulePkg.dsc@; \
-		s/^(TARGET\s*=).*$/\1 '${COMPILE_MODE}'/; \
-		s/^(TARGET_ARCH\s*=).*$/\1 '${ARCH}'/; \
-		s/^(TOOL_CHAIN_TAG\s*=).*$/\1 '${TOOLCHAIN_TAG}'/; \
-		s/^(MAX_CONCURRENT_THREAD_NUMBER\s*=).*$/\1 '$(makeopts_jobs)'/' \
-		"${S}/Conf/target.txt" || die "Failed to configure target file"
+	python_setup 'python2.7'
+
+	# Compile of Base Tools is required for further setting up the environment
+	# Base tools does not like parallel make
+	local cflags_save=${CFLAGS}
+	append-cflags $(test-flags-CC -MD) $(test-flags-CC -fshort-wchar)
+	append-cflags $(test-flags-CC -fno-strict-aliasing)
+	append-cflags $(test-flags-CC -nostdlib) $(test-flags-CC -c)
+	sed -e "s:^\(CFLAGS\s*=\).*$:\1 ${CFLAGS}:" \
+		-i "${S}/BaseTools/Source/C/Makefiles/header.makefile" \
+		|| die "Failed to update makefile header"
+	local make_flags=(
+		CC="$(tc-getCC)"
+		CXX="$(tc-getCXX)"
+		AS="$(tc-getAS)"
+		AR="$(tc-getAR)"
+		LD="$(tc-getLD)"
+	)
+	emake "${make_flags[@]}" -j1 -C BaseTools
+	. edksetup.sh BaseTools
+
+	# Update flags in UDK parameter files
+	CFLAGS=${cflags_save}
+	append-cflags $(test-flags-CC -fshort-wchar)
+	append-cflags $(test-flags-CC -fno-strict-aliasing) $(test-flags-CC -c)
+	append-cflags $(test-flags-CC -ffunction-sections)
+	append-cflags $(test-flags-CC -fdata-sections)
+	append-cflags $(test-flags-CC -fno-stack-protector)
+	append-cflags $(test-flags-CC -fno-asynchronous-unwind-tables)
+	if [[ "${ARCH}" == "X64" ]]; then
+		append-cflags $(test-flags-CC -m64) $(test-flags-CC -mno-red-zone)
+		append-cflags $(test-flags-CC -mcmodel=large)
+	else
+		append-cflags $(test-flags-CC -m32) $(test-flags-CC -malign-double)
+	fi
+	append-ldflags -nostdlib -n -q --gc-sections
+	sed -e "s:^\(ACTIVE_PLATFORM\s*=\).*$:\1 MdeModulePkg/MdeModulePkg.dsc:" \
+		-e "s:^\(TARGET\s*=\).*$:\1 ${COMPILE_MODE}:" \
+		-e "s:^\(TARGET_ARCH\s*=\).*$:\1 ${ARCH}:" \
+		-e "s:^\(TOOL_CHAIN_TAG\s*=\).*$:\1 ${TOOLCHAIN_TAG}:" \
+		-e "s:^\(MAX_CONCURRENT_THREAD_NUMBER\s*=\).*$:\1 $(makeopts_jobs):" \
+		-i "${S}/Conf/target.txt" || die "Failed to configure target file"
+	cat >>${S}/Conf/tools_def.txt <<EOF
+
+*_CUSTOM_*_*_FAMILY          = GCC
+*_CUSTOM_*_MAKE_PATH         = make
+*_CUSTOM_*_ASL_PATH          = DEF(UNIX_IASL_BIN)
+*_CUSTOM_*_OBJCOPY_PATH      = $(tc-getOBJCOPY)
+*_CUSTOM_*_CC_PATH           = $(tc-getCC)
+*_CUSTOM_*_SLINK_PATH        = $(tc-getAR)
+*_CUSTOM_*_DLINK_PATH        = $(tc-getLD)
+*_CUSTOM_*_ASLDLINK_PATH     = $(tc-getLD)
+*_CUSTOM_*_ASM_PATH          = $(tc-getCC)
+*_CUSTOM_*_PP_PATH           = $(tc-getCC)
+*_CUSTOM_*_VFRPP_PATH        = $(tc-getCC)
+*_CUSTOM_*_ASLCC_PATH        = $(tc-getCC)
+*_CUSTOM_*_ASLPP_PATH        = $(tc-getCC)
+*_CUSTOM_*_RC_PATH           = $(tc-getOBJCOPY)
+*_CUSTOM_*_PP_FLAGS          = DEF(GCC_PP_FLAGS)
+*_CUSTOM_*_ASLPP_FLAGS       = DEF(GCC_ASLPP_FLAGS)
+*_CUSTOM_*_ASLCC_FLAGS       = DEF(GCC_ASLCC_FLAGS)
+*_CUSTOM_*_VFRPP_FLAGS       = DEF(GCC_VFRPP_FLAGS)
+*_CUSTOM_*_APP_FLAGS         =
+*_CUSTOM_*_ASL_FLAGS         = DEF(IASL_FLAGS)
+*_CUSTOM_*_ASL_OUTFLAGS      = DEF(IASL_OUTFLAGS)
+*_CUSTOM_*_OBJCOPY_FLAGS     = 
+*_CUSTOM_IA32_ASLCC_FLAGS    = DEF(GCC_ASLCC_FLAGS) -m32
+*_CUSTOM_IA32_ASM_FLAGS      = DEF(GCC_ASM_FLAGS) -m32 -march=i386
+*_CUSTOM_IA32_CC_FLAGS       = ${CFLAGS} -include AutoGen.h -DSTRING_ARRAY_NAME=\$(BASE_NAME)Strings -D EFI32
+*_CUSTOM_IA32_ASLDLINK_FLAGS = ${LDFLAGS} -z common-page-size=0x40 --entry ReferenceAcpiTable -u ReferenceAcpiTable -m elf_i386
+*_CUSTOM_IA32_DLINK_FLAGS    = ${LDFLAGS} -z common-page-size=0x40 --entry \$(IMAGE_ENTRY_POINT) -u \$(IMAGE_ENTRY_POINT) -Map \$(DEST_DIR_DEBUG)/\$(BASE_NAME).map -m elf_i386 --oformat=elf32-i386
+*_CUSTOM_IA32_DLINK2_FLAGS   = DEF(GCC_DLINK2_FLAGS_COMMON) --defsym=PECOFF_HEADER_SIZE=0x220
+*_CUSTOM_IA32_RC_FLAGS       = DEF(GCC_IA32_RC_FLAGS)
+*_CUSTOM_IA32_NASM_FLAGS     = -f elf32
+*_CUSTOM_X64_ASLCC_FLAGS     = DEF(GCC_ASLCC_FLAGS) -m64
+*_CUSTOM_X64_ASM_FLAGS       = DEF(GCC_ASM_FLAGS) -m64
+*_CUSTOM_X64_CC_FLAGS        = ${CFLAGS} -include AutoGen.h -DSTRING_ARRAY_NAME=\$(BASE_NAME)Strings "-DEFIAPI=__attribute__((ms_abi))" -DNO_BUILTIN_VA_FUNCS
+*_CUSTOM_X64_ASLDLINK_FLAGS  = ${LDFLAGS} -z common-page-size=0x40 --entry ReferenceAcpiTable -u ReferenceAcpiTable -m elf_x86_64
+*_CUSTOM_X64_DLINK_FLAGS     = ${LDFLAGS} -z common-page-size=0x40 --entry \$(IMAGE_ENTRY_POINT) -u \$(IMAGE_ENTRY_POINT) -Map \$(DEST_DIR_DEBUG)/\$(BASE_NAME).map -m elf_x86_64 --oformat=elf64-x86-64
+*_CUSTOM_X64_DLINK2_FLAGS    = DEF(GCC_DLINK2_FLAGS_COMMON) --defsym=PECOFF_HEADER_SIZE=0x228
+*_CUSTOM_X64_RC_FLAGS        = DEF(GCC_X64_RC_FLAGS)
+*_CUSTOM_X64_NASM_FLAGS      = -f elf64
+EOF
 }
 
 src_compile() {
+	local build_target
 	if use examples; then
-		BUILD_TARGET=all
+		build_target=all
 	else
-		BUILD_TARGET=libraries
+		build_target=libraries
 	fi
-	build ${BUILD_TARGET} || die "Failed to compile environment"
-	# TODO Sometimes a package will not use the user's ${CFLAGS} or ${LDFLAGS}.
-	# TODO This must be worked around.
-	# TODO See https://devmanual.gentoo.org/ebuild-writing/functions/src_compile/building/index.html
+
+	build ${build_target} || die "Failed to compile environment"
 }
 
 src_install() {
-	BUILD_DIR="${S}/Build/MdeModule/${COMPILE_MODE}_${TOOLCHAIN_TAG}/${ARCH}"
+	local build_dir="${S}/Build/MdeModule/${COMPILE_MODE}_${TOOLCHAIN_TAG}/${ARCH}"
 
-	for f in "${BUILD_DIR}"/*/Library/*/*/OUTPUT/*.lib; do
+	for f in "${build_dir}"/*/Library/*/*/OUTPUT/*.lib; do
 		newlib.a "${f}" lib$(basename "${f}" .lib).a
 	done
 	dolib "${S}/BaseTools/Scripts/GccBase.lds"
 
-	INCLUDE_DEST="/usr/include/${PN}"
+	local include_dest="/usr/include/${PN}"
 	for f in "" /Guid /IndustryStandard /Library /Pi /Ppi /Protocol /Uefi; do
-		insinto "${INCLUDE_DEST}${f}"
+		insinto "${include_dest}${f}"
 		doins "${S}/MdePkg/Include${f}"/*.h
 	done
-	insinto "${INCLUDE_DEST}"
+	insinto "${include_dest}"
 	doins "${S}/MdePkg/Include/${ARCH}"/*.h
 	find "${S}" -name 'BaseTools' -prune -o -name 'MdePkg' -prune -o \
 		-name 'CryptoPkg' -prune -o -type d -name Include \
@@ -122,24 +195,30 @@ src_install() {
 		done
 	fi
 
+	local ex_rebuild_dir
+	local ex_name
+	local ex_build_dir
 	if use examples; then
-		EX_REBUILD_DIR="${S}/${P}-exemples"
+		ex_rebuild_dir="${S}/${P}-exemples"
 		for f in "${S}/MdeModulePkg/Application"/*; do
-			EX_NAME=$(basename "${f}")
-			ebegin "Preparing ${EX_NAME} example"
-			mkdir -p "${EX_REBUILD_DIR}/${EX_NAME}"
-			EX_BUILD_DIR="${BUILD_DIR}/MdeModulePkg/Application"
-			EX_BUILD_DIR="${EX_BUILD_DIR}/${EX_NAME}/${EX_NAME}"
-			copySourceFiles "${f}" "${EX_REBUILD_DIR}/${EX_NAME}"
-			copySourceFiles "${EX_BUILD_DIR}/DEBUG" "${EX_REBUILD_DIR}/${EX_NAME}"
-			createMakefile "${EX_REBUILD_DIR}/${EX_NAME}/Makefile" \
-				"${EX_NAME}" "${EX_BUILD_DIR}/GNUmakefile"
-			tar -C "${EX_REBUILD_DIR}" -cf "${EX_REBUILD_DIR}/${EX_NAME}.tar" \
-				"${EX_NAME}"
+			ex_name=$(basename "${f}")
+			ebegin "Preparing ${ex_name} example"
+			mkdir -p "${ex_rebuild_dir}/${ex_name}" || die
+			ex_build_dir="${build_dir}/MdeModulePkg/Application"
+			ex_build_dir="${ex_build_dir}/${ex_name}/${ex_name}"
+
+			copySourceFiles "${f}" "${ex_rebuild_dir}/${ex_name}"
+			copySourceFiles "${ex_build_dir}/DEBUG" "${ex_rebuild_dir}/${ex_name}"
+			createMakefile "${ex_rebuild_dir}/${ex_name}/Makefile" \
+				"${ex_name}" "${ex_build_dir}/GNUmakefile" || die
+
+			tar -C "${ex_rebuild_dir}" -cf "${ex_rebuild_dir}/${ex_name}.tar" \
+				"${ex_name}" || die
+
 			eend $? "Failed to create example file"
 		done
 		docinto "examples"
-		dodoc "${EX_REBUILD_DIR}"/*.tar
+		dodoc "${ex_rebuild_dir}"/*.tar
 	fi
 
 # TODO * QA Notice: The following files contain writable and executable sections
@@ -158,14 +237,6 @@ src_install() {
 # TODO * /usr/include/bits/string3.h:90:70: warning: call to void* __builtin___memset_chk(void*, int, long unsigned int, long unsigned int) will always overflow destination buffer
 }
 
-pkg_postinst() {
-	elog "Installation done for ${ARCH}"
-	use doc && \
-		elog "You can find documentation in /usr/share/doc/${PF}/html"
-	use examples && \
-		elog "You can find examples in /usr/share/doc/${PF}/examples"
-}
-
 ##
 # Parameters :
 # 1 - Path where to search for source files.
@@ -173,10 +244,13 @@ pkg_postinst() {
 copySourceFiles() {
 	while read -d '' -r filename; do
 		DEST_FILE="${2}${filename#${1}}"
-		mkdir -p $(dirname "${DEST_FILE}")
-		mv "${filename}" "${DEST_FILE}"
+		mkdir -p $(dirname "${DEST_FILE}") || die
+		mv "${filename}" "${DEST_FILE}" || die
 	done < <(find "${1}" -name '*.h' -print0 -o -name '*.c' -print0)
 }
+
+# This looks like it should instead have a template Makefile shipped with the
+# ebuild which is then copied and sed'd to meet requirements.
 
 ##
 # Parameters :
