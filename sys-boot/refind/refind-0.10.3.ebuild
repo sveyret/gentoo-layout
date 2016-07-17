@@ -77,7 +77,9 @@ src_compile() {
 	[[ $EFIARCH == x64 ]] && pecoff_header_size='0x228' \
 		|| pecoff_header_size='0x220'
 
-	append-cflags "-fno-strict-aliasing" "-fno-stack-protector" "-fshort-wchar" "-Wall"
+	append-cflags $(test-flags-CC -fno-strict-aliasing)
+	append-cflags $(test-flags-CC -fno-stack-protector)
+	append-cflags $(test-flags-CC -fshort-wchar) $(test-flags-CC -Wall)
 
 	local make_flags=(
 		ARCH="${BUILDARCH}"
