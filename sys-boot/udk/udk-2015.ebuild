@@ -98,54 +98,19 @@ src_configure() {
 	else
 		append-cflags $(test-flags-CC -m32) $(test-flags-CC -malign-double)
 	fi
-	append-ldflags -nostdlib -n -q --gc-sections
 	sed -e "s:^\(ACTIVE_PLATFORM\s*=\).*$:\1 MdeModulePkg/MdeModulePkg.dsc:" \
 		-e "s:^\(TARGET\s*=\).*$:\1 RELEASE:" \
 		-e "s:^\(TARGET_ARCH\s*=\).*$:\1 ${ARCH}:" \
 		-e "s:^\(TOOL_CHAIN_TAG\s*=\).*$:\1 ${TOOLCHAIN_TAG}:" \
 		-e "s:^\(MAX_CONCURRENT_THREAD_NUMBER\s*=\).*$:\1 $(makeopts_jobs):" \
 		-i "${S}/Conf/target.txt" || die "Failed to configure target file"
-	cat >>${S}/Conf/tools_def.txt <<EOF
-
-*_CUSTOM_*_*_FAMILY          = GCC
-*_CUSTOM_*_MAKE_PATH         = make
-*_CUSTOM_*_ASL_PATH          = DEF(UNIX_IASL_BIN)
-*_CUSTOM_*_OBJCOPY_PATH      = $(tc-getOBJCOPY)
-*_CUSTOM_*_CC_PATH           = $(tc-getCC)
-*_CUSTOM_*_SLINK_PATH        = $(tc-getAR)
-*_CUSTOM_*_DLINK_PATH        = $(tc-getLD)
-*_CUSTOM_*_ASLDLINK_PATH     = $(tc-getLD)
-*_CUSTOM_*_ASM_PATH          = $(tc-getCC)
-*_CUSTOM_*_PP_PATH           = $(tc-getCC)
-*_CUSTOM_*_VFRPP_PATH        = $(tc-getCC)
-*_CUSTOM_*_ASLCC_PATH        = $(tc-getCC)
-*_CUSTOM_*_ASLPP_PATH        = $(tc-getCC)
-*_CUSTOM_*_RC_PATH           = $(tc-getOBJCOPY)
-*_CUSTOM_*_PP_FLAGS          = DEF(GCC_PP_FLAGS)
-*_CUSTOM_*_ASLPP_FLAGS       = DEF(GCC_ASLPP_FLAGS)
-*_CUSTOM_*_ASLCC_FLAGS       = DEF(GCC_ASLCC_FLAGS)
-*_CUSTOM_*_VFRPP_FLAGS       = DEF(GCC_VFRPP_FLAGS)
-*_CUSTOM_*_APP_FLAGS         =
-*_CUSTOM_*_ASL_FLAGS         = DEF(IASL_FLAGS)
-*_CUSTOM_*_ASL_OUTFLAGS      = DEF(IASL_OUTFLAGS)
-*_CUSTOM_*_OBJCOPY_FLAGS     = 
-*_CUSTOM_IA32_ASLCC_FLAGS    = DEF(GCC_ASLCC_FLAGS) -m32
-*_CUSTOM_IA32_ASM_FLAGS      = DEF(GCC_ASM_FLAGS) -m32 -march=i386
-*_CUSTOM_IA32_CC_FLAGS       = ${CFLAGS} -include AutoGen.h -DSTRING_ARRAY_NAME=\$(BASE_NAME)Strings -D EFI32
-*_CUSTOM_IA32_ASLDLINK_FLAGS = ${LDFLAGS} -z common-page-size=0x40 --entry ReferenceAcpiTable -u ReferenceAcpiTable -m elf_i386
-*_CUSTOM_IA32_DLINK_FLAGS    = ${LDFLAGS} -z common-page-size=0x40 --entry \$(IMAGE_ENTRY_POINT) -u \$(IMAGE_ENTRY_POINT) -Map \$(DEST_DIR_DEBUG)/\$(BASE_NAME).map -m elf_i386 --oformat=elf32-i386
-*_CUSTOM_IA32_DLINK2_FLAGS   = DEF(GCC_DLINK2_FLAGS_COMMON) --defsym=PECOFF_HEADER_SIZE=0x220
-*_CUSTOM_IA32_RC_FLAGS       = DEF(GCC_IA32_RC_FLAGS)
-*_CUSTOM_IA32_NASM_FLAGS     = -f elf32
-*_CUSTOM_X64_ASLCC_FLAGS     = DEF(GCC_ASLCC_FLAGS) -m64
-*_CUSTOM_X64_ASM_FLAGS       = DEF(GCC_ASM_FLAGS) -m64
-*_CUSTOM_X64_CC_FLAGS        = ${CFLAGS} -include AutoGen.h -DSTRING_ARRAY_NAME=\$(BASE_NAME)Strings "-DEFIAPI=__attribute__((ms_abi))" -DNO_BUILTIN_VA_FUNCS
-*_CUSTOM_X64_ASLDLINK_FLAGS  = ${LDFLAGS} -z common-page-size=0x40 --entry ReferenceAcpiTable -u ReferenceAcpiTable -m elf_x86_64
-*_CUSTOM_X64_DLINK_FLAGS     = ${LDFLAGS} -z common-page-size=0x40 --entry \$(IMAGE_ENTRY_POINT) -u \$(IMAGE_ENTRY_POINT) -Map \$(DEST_DIR_DEBUG)/\$(BASE_NAME).map -m elf_x86_64 --oformat=elf64-x86-64
-*_CUSTOM_X64_DLINK2_FLAGS    = DEF(GCC_DLINK2_FLAGS_COMMON) --defsym=PECOFF_HEADER_SIZE=0x228
-*_CUSTOM_X64_RC_FLAGS        = DEF(GCC_X64_RC_FLAGS)
-*_CUSTOM_X64_NASM_FLAGS      = -f elf64
-EOF
+	sed -e "s:«CC»:$(tc-getCC):" \
+		-e "s:«AR»:$(tc-getAR):" \
+		-e "s:«LD»:$(tc-getLD):" \
+		-e "s:«OBJCOPY»:$(tc-getOBJCOPY):" \
+		-e "s:«CFLAGS»:${CFLAGS}:" \
+		"${FILESDIR}/${PV}-tools_def.template" >>${S}/Conf/tools_def.txt \
+		|| die "Failed to prepare tools definition file"
 }
 
 src_compile() {
@@ -256,79 +221,24 @@ copySourceFiles() {
 # 2 - Name of the module.
 # 3 - Path of the generated Makefile.
 createMakefile() {
-	cat >${1} <<EOF
-TOP := \$(abspath \$(dir \$(lastword \$(MAKEFILE_LIST))))
-EXEC = ${2}.efi
-SRC = \$(shell find \$(TOP) -type f -name '*.c')
-OBJ = \$(SRC:.c=.o)
-INC_DIR = /usr/include/${PN}
-LIB_DIR = /usr/lib
-STATIC_LIBRARY_FILES = \\
-EOF
-
-	perl -ne \
-'if( m/^STATIC_LIBRARY_FILES\s*=/ ) {
-	$static=1;
-} elsif( $static ) {
-	if( m!^\s*\$\(BIN_DIR\).*/([^/]*)\.lib! ) {
-		print "\t\"-l${1}\" \\\n"
-	} else {
-		$static=0;
-	}
-}' >>${1} <${3}
-
-	cat >>${1} <<EOF
-
-EFI_LDS = \$(LIB_DIR)/GccBase.lds
-
-EOF
-	grep -e '^MODULE_TYPE\s*=' ${3} >>${1}
-	grep -e '^IMAGE_ENTRY_POINT\s*=' ${3} >>${1}
-	echo >>${1}
-	grep -e '^CP\s*=' ${3} >>${1}
-	grep -e '^RM\s*=' ${3} >>${1}
-	grep -e '^CC\s*=' ${3} >>${1}
-	grep -e '^DLINK\s*=' ${3} >>${1}
-	grep -e '^OBJCOPY\s*=' ${3} >>${1}
-	grep -e '^GENFW\s*=' ${3} >>${1}
-	[[ $ARCH == X64 ]] && PECOFF_HEADER_SIZE='0x228' || PECOFF_HEADER_SIZE='0x220'
-	cat >>${1} <<EOF
-
-CC_FLAGS = -g -fshort-wchar -fno-strict-aliasing -Wall -Werror \
--Wno-array-bounds -ffunction-sections -fdata-sections -c -iquote\$(TOP) \
--include AutoGen.h -I\$(INC_DIR) -DSTRING_ARRAY_NAME=${2}Strings -m64 \
--fno-stack-protector "-DEFIAPI=__attribute__((ms_abi))" -DNO_BUILTIN_VA_FUNCS \
--mno-red-zone -Wno-address -mcmodel=large -Wno-address \
--Wno-unused-but-set-variable
-DLINK_FLAGS=-nostdlib -n -q --gc-sections --entry \$(IMAGE_ENTRY_POINT) \
--u \$(IMAGE_ENTRY_POINT) -melf_x86_64 --oformat=elf64-x86-64 -L \$(LIB_DIR) \
---script=\$(EFI_LDS) --defsym=PECOFF_HEADER_SIZE=${PECOFF_HEADER_SIZE}
-EOF
-	grep -e '^OBJCOPY_FLAGS\s*=' ${3} >>${1}
-	grep -e '^GENFW_FLAGS\s*=' ${3} >>${1}
-	cat >>${1} <<EOF
-
-all:	\$(EXEC)
-
-%.efi:	\$(OBJ)
-	\$(DLINK) -o \$(@:.efi=.dll) \$(DLINK_FLAGS) \\
-		--start-group \$(STATIC_LIBRARY_FILES) \$^ --end-group
-	\$(OBJCOPY) \$(OBJCOPY_FLAGS) \$(@:.efi=.dll)
-	\$(CP) \$(@:.efi=.dll) \$(@:.efi=.debug)
-	\$(OBJCOPY) --strip-unneeded -R .eh_frame \$(@:.efi=.dll)
-	\$(OBJCOPY) --add-gnu-debuglink=\$(@:.efi=.debug) \$(@:.efi=.dll)
-	\$(GENFW) -e \$(MODULE_TYPE) -o \$@ \$(@:.efi=.dll) \$(GENFW_FLAGS)
-	\$(RM) \$(@:.efi=.dll)
-
-%.o:	%.c
-	\$(CC) \$(CC_FLAGS) -o \$@ \$^
-
-clean:
-	\$(RM) *.o
-
-mrproper: clean
-	\$(RM) \$(EXEC) \$(EXEC:.efi=.debug)
-
-.PHONY: all clean mrproper
-EOF
+	local static_libs=$(sed -n '/^STATIC_LIBRARY_FILES\s*=/,/^\s*\$(OUTPUT_DIR)/{/^\s*\$(OUTPUT_DIR)/b;p}' ${3} \
+		| sed -e 's:^\s*\$(BIN_DIR).*/\([^/]*\)\.lib:\t-l\1:' -e 's:\\$:\\\\\\n:' | tr --delete '\n')
+	local pecoff_header_size;
+	[[ $ARCH == X64 ]] && pecoff_header_size='0x228' || pecoff_header_size='0x220'
+	sed -e "s:«MODULE»:${2}:" \
+		-e "s:«PACKAGE_NAME»:${PN}:" \
+		-e "s:«STATIC_LIBS»:${static_libs}:" \
+		-e "s:«MODULE_TYPE»:$(grep -e '^MODULE_TYPE\s*=' ${3} | tail -1):" \
+		-e "s:«IMAGE_ENTRY_POINT»:$(grep -e '^IMAGE_ENTRY_POINT\s*=' ${3}):" \
+		-e "s:«CP»:$(grep -e '^CP\s*=' ${3}):" \
+		-e "s:«RM»:$(grep -e '^RM\s*=' ${3}):" \
+		-e "s:«CC»:$(grep -e '^CC\s*=' ${3}):" \
+		-e "s:«DLINK»:$(grep -e '^DLINK\s*=' ${3}):" \
+		-e "s:«OBJCOPY»:$(grep -e '^OBJCOPY\s*=' ${3}):" \
+		-e "s:«GENFW»:$(grep -e '^GENFW\s*=' ${3}):" \
+		-e "s:«PECOFF_HEADER_SIZE»:${pecoff_header_size}:" \
+		-e "s:«OBJCOPY_FLAGS»:$(grep -e '^OBJCOPY_FLAGS\s*=' ${3}):" \
+		-e "s:«GENFW_FLAGS»:$(grep -e '^GENFW_FLAGS\s*=' ${3}):" \
+		"${FILESDIR}/${PV}-makefile.template" >${1} \
+		|| die "Failed to create Makefile"
 }
