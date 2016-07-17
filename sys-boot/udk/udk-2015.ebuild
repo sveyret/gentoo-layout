@@ -212,9 +212,6 @@ copySourceFiles() {
 	done < <(find "${1}" -name '*.h' -print0 -o -name '*.c' -print0)
 }
 
-# This looks like it should instead have a template Makefile shipped with the
-# ebuild which is then copied and sed'd to meet requirements.
-
 ##
 # Parameters :
 # 1 - Path of the file to create.
