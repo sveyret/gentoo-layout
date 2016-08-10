@@ -11,6 +11,7 @@ RDEPEND=">=virtual/jdk-1.7"
 MY_VERSION_STRING="$(get_version_component_range 4-6)"
 MY_PV="$(get_version_component_range 1-3)"
 [[ $(get_version_component_range 3) -eq 0 ]] && MY_PV=$(get_version_component_range 1-2)
+[[ $(get_version_component_range 7) -eq 0 ]] || MY_PV="${MY_PV}b"
 MY_PN="idea"
 
 RESTRICT="strip"
@@ -42,7 +43,7 @@ HOMEPAGE="http://jetbrains.com/idea/"
 SRC_URI="http://download.jetbrains.com/${MY_PN}/${MY_PN}IC-${MY_PV}.tar.gz"
 LICENSE="Apache-2.0"
 IUSE=""
-KEYWORDS="amd64 x86"
+KEYWORDS="~amd64 ~x86"
 S="${WORKDIR}/${MY_PN}-IC-${MY_VERSION_STRING}"
 
 src_prepare() {
