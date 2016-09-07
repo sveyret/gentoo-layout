@@ -44,14 +44,6 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 :link: http://codelite.org/
 
-## dev-util/idea-community
-
-:ticket: IntelliJ IDEA
-
-:speech_balloon: Capable and Ergonomic Java IDE
-
-:link: https://www.jetbrains.com/idea/
-
 ## sys-boot/refind
 
 :construction_worker: **Incubator**: [bugs #566930](https://bugs.gentoo.org/show_bug.cgi?id=566930), [#563226](https://bugs.gentoo.org/show_bug.cgi?id=563226), [#582716](https://bugs.gentoo.org/show_bug.cgi?id=582716)
