@@ -26,6 +26,14 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 # Applications
 
+## app-shells/magicd
+
+:ticket: MagiCd
+
+:speech_balloon: MagiCd, makes cd become magic!
+
+:link: https://github.com/sveyret/magicd/
+
 ## dev-db/squirrel-sql
 
 :ticket: SQuirreL SQL
