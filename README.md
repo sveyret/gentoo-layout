@@ -54,23 +54,11 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 ## sys-boot/refind
 
-:construction_worker: **Incubator**: [bugs #566930](https://bugs.gentoo.org/show_bug.cgi?id=566930), [#563226](https://bugs.gentoo.org/show_bug.cgi?id=563226), [#582716](https://bugs.gentoo.org/show_bug.cgi?id=582716)
-
-:ticket: rEFInd
-
-:speech_balloon: The rEFInd Boot Manager
-
-:link: http://www.rodsbooks.com/refind/
+:feet: Now in official Gentoo portage tree.
 
 ## sys-boot/udk
 
-:construction_worker: **Incubator**: [bug #588440](https://bugs.gentoo.org/show_bug.cgi?id=588440)
-
-:ticket: tianocore UDK
-
-:speech_balloon: UEFI Development Kit
-
-:link: http://www.rodsbooks.com/refind/
+:feet: Now in official Gentoo portage tree.
 
 ## sys-kernel/kema
 
