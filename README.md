@@ -52,6 +52,10 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 :link: http://codelite.org/
 
+## sys-apps/misybag-baselayout
+
+:link: https://github.com/sveyret/misybag-baselayout/
+
 ## sys-boot/refind
 
 :feet: Now in official Gentoo portage tree.
