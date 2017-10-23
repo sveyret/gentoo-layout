@@ -26,6 +26,14 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 # Applications
 
+## app-editors/pluma-grammalecte
+
+:ticket: pluma-grammalecte
+
+:speech_balloon: Grammalecte plugin for pluma editor.
+
+:link: https://github.com/sveyret/pluma-grammalecte/
+
 ## app-shells/magicd
 
 :ticket: MagiCd
@@ -33,6 +41,14 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 :speech_balloon: MagiCd, makes cd become magic!
 
 :link: https://github.com/sveyret/magicd/
+
+## app-text/grammalecte-bin
+
+:ticket: Grammalecte
+
+:speech_balloon: French grammar checker (binary distribution).
+
+:link: https://www.dicollecte.org/
 
 ## dev-db/squirrel-sql
 
