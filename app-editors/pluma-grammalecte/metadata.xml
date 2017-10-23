@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription lang="en">
+		Grammalecte (French Grammar checker) plugin for pluma
+	</longdescription>
+	<longdescription lang="fr">
+		Greffon Grammalecte (correcteur grammatical français) pour pluma
+	</longdescription>
+</pkgmetadata>
+
