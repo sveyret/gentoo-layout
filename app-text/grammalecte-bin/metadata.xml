@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription lang="en">
+		Grammar checker for French language
+	</longdescription>
+	<longdescription lang="fr">
+		Correcteur grammatical pour la langue française
+	</longdescription>
+</pkgmetadata>
+
