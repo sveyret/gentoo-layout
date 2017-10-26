@@ -48,7 +48,7 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 :speech_balloon: French grammar checker (binary distribution).
 
-:link: https://www.dicollecte.org/
+:link: http://grammalecte.net/
 
 ## dev-db/squirrel-sql
 
