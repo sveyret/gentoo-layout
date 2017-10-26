@@ -1,8 +1,7 @@
-# Copyright 1999-2016 Gentoo Foundation
+# Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id$
 
-EAPI=5
+EAPI=6
 
 inherit versionator cmake-utils wxwidgets
 
@@ -20,11 +19,12 @@ IUSE=""
 
 KEYWORDS="~amd64 ~x86"
 
-RDEPEND=">=x11-libs/wxGTK-3.0.0 net-libs/libssh"
+RDEPEND=">=x11-libs/wxGTK-3.0.0:3.0 net-libs/libssh"
 DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/${PN}-${MY_VERSION}"
 
 src_prepare() {
 	WX_GTK_VER=3.0 need-wxwidgets unicode
+	eapply_user
 }
