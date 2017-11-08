@@ -1,8 +1,7 @@
-# Copyright 1999-2016 Gentoo Foundation
+# Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id$
 
-EAPI="5"
+EAPI=6
 
 inherit versionator java-pkg-2
 
@@ -15,7 +14,7 @@ RESTRICT="primaryuri"
 LICENSE="LGPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="firebird mssql mysql oracle postgres sybase"
+IUSE="mssql mysql postgres sybase"
 
 DEPEND=">=virtual/jdk-1.6:*"
 RDEPEND="
@@ -25,8 +24,6 @@ RDEPEND="
 	mysql? ( dev-java/jdbc-mysql )
 	mssql? ( dev-java/jdbc-mssqlserver )
 	sybase? ( dev-java/jtds )
-	firebird? ( dev-java/jdbc-jaybird )
-	oracle? ( dev-java/jdbc-oracle-bin )
 "
 
 S="${WORKDIR}/squirrelsql-${MY_SHORT_PV}-standard"
@@ -52,10 +49,6 @@ src_install() {
 				jb="mssqlserver"
 			elif [ "${backend}" == "sybase" ]; then
 				jb="jtds"
-			elif [ "${backend}" == "firebird" ]; then
-				jb="jaybird"
-			elif [ "${backend}" == "oracle" ]; then
-				jb="oracle-bin"
 			else
 				jb="${backend}"
 			fi
