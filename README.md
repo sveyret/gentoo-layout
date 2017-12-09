@@ -54,7 +54,7 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 :ticket: SQuirreL SQL
 
-:speech_balloon: Universal SQL Client
+:speech_balloon: Universal SQL Client.
 
 :link: http://squirrel-sql.sourceforge.net/
 
@@ -64,11 +64,15 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 :ticket: CodeLite IDE
 
-:speech_balloon: A Free, open source, cross platform C,C++,PHP and Node.js IDE
+:speech_balloon: A Free, open source, cross platform C,C++,PHP and Node.js IDE.
 
 :link: http://codelite.org/
 
 ## sys-apps/misybag-baselayout
+
+:ticket: MisybaG base layout
+
+:speech_balloon: The base layout for MisybaG distribution.
 
 :link: https://github.com/sveyret/misybag-baselayout/
 
@@ -84,7 +88,7 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 :ticket: kema
 
-:speech_balloon: The Gentoo kernel manager
+:speech_balloon: The Gentoo kernel manager.
 
 :link: https://github.com/sveyret/kema/
 
