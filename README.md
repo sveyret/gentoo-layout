@@ -24,6 +24,23 @@ Notez que certaines applications sont ici en incubation. Cela signifie que :
 
 Ces applications sont clairement indiquées dans la description ci-dessous. En ce qui concerne les autres applications, puisqu'elles me sont utiles, elles sont potentiellement utiles à d'autres. De ce fait, elle peuvent également un jour passer en incubation.
 
+# Usage
+
+:us: :gb:
+
+You can either use `layman` or create a file named `/etc/portage/repos.conf/sveyret.conf` with the content below:
+
+:fr:
+
+Vous pouvez soit utiliser `layman` soit créer un fichier `/etc/portage/repos.conf/sveyret.conf` avec le contenu ci-dessous :
+
+    [sveyret]
+    priority = 50
+    location = /usr/local/portage/sveyret-overlay
+    sync-type = git
+    sync-uri = https://github.com/sveyret/sveyret-overlay.git
+    auto-sync = Yes
+
 # Applications
 
 ## app-editors/pluma-grammalecte
