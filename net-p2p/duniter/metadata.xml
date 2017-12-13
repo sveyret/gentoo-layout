@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>sveyret@gmail.com</email>
+    <name>Stéphane Veyret</name>
+  </maintainer>
+  <longdescription lang="en">
+    Duniter (previously uCoin) is a free software allowing to create a new kind
+    of P2P crypto-currencies based on individuals and Universal Dividend.
+  </longdescription>
+  <longdescription lang="fr">
+    Duniter (précédemment uCoin) est un logiciel libre permettant de créer un
+    nouveau type de crypto-monnaie P2P basée sur les individus et un Dividende
+    Universel.
+  </longdescription>
+  <use>
+    <flag name="desktop">Build a desktop version instead of a pure server</flag>
+    <flag name="web">Add a web interface to the server</flag>
+  </use>
+</pkgmetadata>

@@ -85,6 +85,14 @@ Vous pouvez soit utiliser `layman` soit créer un fichier `/etc/portage/repos.co
 
 :link: http://codelite.org/
 
+## net-p2p/duniter
+
+:ticket: Duniter
+
+:speech_balloon: Crypto-currency software to manage libre currency.
+
+:link: https://duniter.org/
+
 ## sys-apps/misybag-baselayout
 
 :ticket: MisybaG base layout
