@@ -15,7 +15,7 @@
     Universel.
   </longdescription>
   <use>
-    <flag name="desktop">Build a desktop version instead of a pure server</flag>
+    <flag name="desktop">Build a desktop version instead of a server</flag>
     <flag name="web">Add a web interface to the server</flag>
   </use>
 </pkgmetadata>

@@ -98,13 +98,6 @@ src_compile() {
 
 		# Update path to icon
 		sed -i "s:^\\(Icon\\s*=\\s*\\)/.*/\\([^/]*\\)$:\\1\\2:" release/arch/debian/package/usr/share/applications/duniter.desktop
-
-		# Create launch script
-		cat <<-EOF >duniter-desktop.sh
-		DUNITER_DIR="${EPREFIX%/}/opt/${PN}"
-		cd "\$DUNITER_DIR"
-		"\$DUNITER_DIR/node_modules/.bin/nw" "\$@"
-		EOF
 	fi
 
 	# Cleanup
@@ -119,12 +112,16 @@ src_compile() {
 		rm -f node_modules/naclb/node_modules/.bin/node-pre-gyp
 	fi
 
-	# Recreate script
+	# Create launch script
 	cat <<-EOF >duniter.sh
 	DUNITER_DIR="${EPREFIX%/}/opt/${PN}"
 	cd "\$DUNITER_DIR"
-	node "\$DUNITER_DIR/bin/duniter" "\$@"
 	EOF
+	if use desktop; then
+		echo '"$DUNITER_DIR/node_modules/.bin/nw" "$@"' >>duniter.sh
+	else
+		echo 'node "$DUNITER_DIR/bin/duniter" "$@"' >>duniter.sh
+	fi
 }
 
 src_install() {
@@ -136,10 +133,7 @@ src_install() {
 	for subelem in package.json tsconfig.json index.* server.* appveyor.yml yarn.lock; do
 		doins ${subelem}
 	done
-	if use desktop; then
-		doins gui/index.html
-		doicon -s scalable gui/duniter.png
-	fi
+	use desktop && doins gui/{index.html,duniter.png}
 	for subelem in app bin doc images node_modules node_modules/.bin; do
 		insinto ${target}/${subelem}
 		doins -r ${subelem}/*
@@ -155,12 +149,12 @@ src_install() {
 
 	exeinto ${target}
 	doexe duniter.sh
-	dosym ${target}/duniter.sh ${EPREFIX%/}/usr/bin/duniter
-
 	if use desktop; then
-		doexe duniter-desktop.sh
-		dosym ${target}/duniter-desktop.sh ${EPREFIX%/}/usr/bin/duniter-desktop
+		dosym ${target}/duniter.sh ${EPREFIX%/}/usr/bin/duniter-desktop
+		doicon -s scalable gui/duniter.png
 		domenu release/arch/debian/package/usr/share/applications/duniter.desktop
+	else
+		dosym ${target}/duniter.sh ${EPREFIX%/}/usr/bin/duniter
 	fi
 }
 
