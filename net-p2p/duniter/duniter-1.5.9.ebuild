@@ -14,8 +14,8 @@ SRC_URI="https://github.com/duniter/${PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 LICENSE="AGPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="+desktop +web"
-REQUIRED_USE="desktop? ( web )"
+IUSE="+desktop +gui"
+REQUIRED_USE="desktop? ( gui )"
 
 RDEPEND="
 	>=net-libs/nodejs-6.9.4[npm,ssl]
@@ -53,7 +53,7 @@ nw_compile() {
 src_compile() {
 	yarn || die
 
-	if use web; then
+	if use gui; then
 		yarn add duniter-ui@1.4.x || die
 		sed -i "s/duniter\//..\/..\/..\/..\//g" node_modules/duniter-ui/server/controller/webmin.js || die
 	fi
