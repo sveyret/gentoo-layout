@@ -97,7 +97,7 @@ src_compile() {
 		sed -i "s/\"main\": \"index.js\",/\"main\": \"index.html\",/" package.json
 
 		# Update path to icon
-		sed -i "s:^\\(Icon\\s*=\\s*\\)/.*/\\([^/]*\\)$:\\1\\2:" release/arch/debian/package/usr/share/applications/duniter.desktop
+		sed -i "s:^\\(Icon\\s*=\\s*\\)/.*/\\([^/]*\\)\\.[^.]*$:\\1\\2:" release/arch/debian/package/usr/share/applications/duniter.desktop
 	fi
 
 	# Cleanup
