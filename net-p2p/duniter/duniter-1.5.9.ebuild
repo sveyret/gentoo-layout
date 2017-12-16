@@ -114,7 +114,7 @@ src_compile() {
 
 	# Create launch script
 	cat <<-EOF >duniter.sh
-	DUNITER_DIR="${EPREFIX%/}/opt/${PN}"
+	DUNITER_DIR="${EPREFIX%/}/usr/lib/${PN}"
 	cd "\$DUNITER_DIR"
 	EOF
 	if use desktop; then
@@ -125,7 +125,7 @@ src_compile() {
 }
 
 src_install() {
-	local target=${EPREFIX%/}/opt/${PN}
+	local target=${EPREFIX%/}/usr/lib/${PN}
 	local subelem
 	dodir ${target}
 
