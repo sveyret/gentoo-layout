@@ -14,18 +14,19 @@ SRC_URI="https://git.duniter.org/nodes/typescript/${PN}/repository/v${PV}/archiv
 LICENSE="AGPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="+desktop +gui"
+IUSE="desktop +gui"
 REQUIRED_USE="desktop? ( gui )"
 
 RDEPEND="
-	>=net-libs/nodejs-8.9.1[npm,ssl]
+	>=net-libs/nodejs-8.9.1[ssl]
+	>=sys-apps/yarn-1.3.2
 "
 DEPEND="
 	${RDEPEND}
 	${PYTHON_DEPS}
 "
 
-NW_VERSION=0.24.4
+NW_VERSION=0.28.0
 DUNITER_UI_VERSION=1.6.x
 
 nw_copy() {
@@ -56,27 +57,20 @@ src_unpack() {
 
 src_compile() {
 	python_setup
-	npm install || die
+	yarn install || die
 
 	if use gui; then
-		npm install duniter-ui@${DUNITER_UI_VERSION} || die
+		yarn add duniter-ui@${DUNITER_UI_VERSION} || die
 	fi
 
-	npm prune --production || die
+	yarn install --offline --production || die
 
 	# Generate desktop
 	if use desktop; then
-		PATH=$(npm bin):${PATH}
-		npm install node-pre-gyp || die
-		npm install nw-gyp || die
-		npm install nw@${NW_VERSION} || die
-
-		# FIX: bug of nw.js, we need to patch first.
-		cd node_modules/wotb || die
-		node-pre-gyp --runtime=node-webkit --target=${NW_VERSION} configure \
-		  || echo "This failure is expected"
-		cd ../..
-		cp release/arch/linux/0.24.4_common.gypi ${HOME}/.nw-gyp/0.24.4/common.gypi || die
+		PATH=$(yarn bin):${PATH}
+		yarn add node-pre-gyp || die
+		yarn add nw-gyp || die
+		yarn add nw@${NW_VERSION} || die
 
 		# Webkit compilation
 		cd node_modules || die
@@ -88,8 +82,6 @@ src_compile() {
 
 		# Unused binaries
 		rm -rf node_modules/sqlite3/build
-		npm uninstall node-pre-gyp || die
-		npm uninstall nw-gyp || die
 
 		# Update package.json
 		sed -i "s/\"main\": \"index.js\",/\"main\": \"index.html\",/" \
