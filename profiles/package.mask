@@ -1,2 +1,0 @@
-# Duniter 1.6 is not released yet
->=net-p2p/duniter-1.6
