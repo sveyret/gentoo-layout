@@ -28,11 +28,25 @@ Ces applications sont clairement indiquées dans la description ci-dessous. En c
 
 :us: :gb:
 
-You can either use `layman` or create a file named `/etc/portage/repos.conf/sveyret.conf` with the content below:
+You can either:
+
+* use [layman](https://wiki.gentoo.org/wiki/Layman#Missing_repository.xml_file), but you will have to manually create the `xml` file;
+* use [eselect](https://wiki.gentoo.org/wiki/Eselect/Repository) typing the below command;
+* or manually create a file named `/etc/portage/repos.conf/sveyret.conf` with the content below.
 
 :fr:
 
-Vous pouvez soit utiliser `layman` soit créer un fichier `/etc/portage/repos.conf/sveyret.conf` avec le contenu ci-dessous :
+Vous pouvez soit :
+
+* utiliser [layman](https://wiki.gentoo.org/wiki/Layman#Missing_repository.xml_file), mais vous devrez créer le fichier `xml` à la main ;
+* utiliser [eselect](https://wiki.gentoo.org/wiki/Eselect/Repository) en tapant la commande ci-dessous ;
+* ou encore créer un fichier `/etc/portage/repos.conf/sveyret.conf` à la main avec le contenu ci-dessous.
+
+**eselect**:
+
+    eselect repository add sveyret git https://github.com/sveyret/sveyret-overlay.git
+
+**/etc/portage/repos.conf/sveyret.conf**:
 
     [sveyret]
     priority = 50
