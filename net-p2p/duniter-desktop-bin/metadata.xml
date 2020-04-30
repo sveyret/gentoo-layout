@@ -8,14 +8,12 @@
 	<longdescription lang="en">
 		Duniter (previously uCoin) is a free software allowing to create a new kind
 		of P2P crypto-currencies based on individuals and Universal Dividend.
+		This package is the official desktop client.
 	</longdescription>
 	<longdescription lang="fr">
 		Duniter (précédemment uCoin) est un logiciel libre permettant de créer un
 		nouveau type de crypto-monnaie P2P basée sur les individus et un Dividende
 		Universel.
+		Ce paquet est le client bureau officiel.
 	</longdescription>
-	<use>
-		<flag name="desktop">Build desktop application instead of server</flag>
-		<flag name="gui">Add a gui, mandatory for desktop application</flag>
-	</use>
 </pkgmetadata>

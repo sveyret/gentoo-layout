@@ -107,6 +107,14 @@ Vous pouvez soit :
 
 :link: https://duniter.org/
 
+## net-p2p/duniter-desktop-bin
+
+:ticket: Duniter Desktop (binary)
+
+:speech_balloon: Crypto-currency software to manage libre currency.
+
+:link: https://duniter.org/
+
 ## sys-apps/misybag-baselayout
 
 :ticket: MisybaG base layout
