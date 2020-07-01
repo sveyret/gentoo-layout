@@ -44,15 +44,15 @@ Vous pouvez soit :
 
 **eselect**:
 
-    eselect repository add sveyret git https://github.com/sveyret/sveyret-overlay.git
+    eselect repository add sveyret git https://github.com/sveyret/sveyret-gentoo.git
 
 **/etc/portage/repos.conf/sveyret.conf**:
 
     [sveyret]
     priority = 50
-    location = /usr/local/portage/sveyret-overlay
+    location = /var/db/repos/sveyret
     sync-type = git
-    sync-uri = https://github.com/sveyret/sveyret-overlay.git
+    sync-uri = https://github.com/sveyret/sveyret-gentoo.git
     auto-sync = Yes
 
 # Applications
