@@ -103,6 +103,7 @@ src_install() {
 		insinto /etc/bash_completion.d
 		doins extra/completion/duniter_completion.bash
 	fi
+	rm -rf extra
 
 	# Intall executables
 	for subelem in $(realpath --relative-to="${PWD}" $(readlink -f node_modules/.bin/*)); do
