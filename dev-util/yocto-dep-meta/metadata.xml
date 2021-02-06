@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>sveyret@gmail.com</email>
+    <name>Stéphane Veyret</name>
+  </maintainer>
+  <longdescription lang="en">
+    The Yocto Project is an open source collaboration project that helps
+    developers create custom Linux-based systems regardless of the hardware
+    architecture. This meta-package installs required dependencies for the
+    Yocto Project.
+  </longdescription>
+  <longdescription lang="fr">
+    Le Yocto Project est un projet collaboratif ouvert qui aide les développeurs
+    à créer des systèmes personnalisés basés sur Linux quel que soit
+    l’architecture matériel. Ce méta-paquet installe les dépendances requises
+    pour le Yocto Project.
+  </longdescription>
+</pkgmetadata>
+

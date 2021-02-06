@@ -99,6 +99,14 @@ Vous pouvez soit :
 
 :link: http://codelite.org/
 
+## dev-util/yocto-dep-meta
+
+:ticket: Yocto dependencies
+
+:speech_balloon: Meta package to install Yocto dependencies.
+
+:link: https://www.yoctoproject.org/
+
 ## net-p2p/duniter
 
 :ticket: Duniter
