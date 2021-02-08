@@ -73,13 +73,13 @@ Vous pouvez soit :
 
 :link: https://github.com/sveyret/magicd/
 
-## app-text/grammalecte-bin
+## app-text/grammalecte
 
 :ticket: Grammalecte
 
-:speech_balloon: French grammar checker (binary distribution).
+:speech_balloon: French grammar checker.
 
-:link: http://grammalecte.net/
+:link: https://grammalecte.net/
 
 ## dev-db/squirrel-sql
 
