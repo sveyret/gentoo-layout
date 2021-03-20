@@ -1,4 +1,4 @@
-# Copyright 2020 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -8,7 +8,7 @@ inherit desktop xdg-utils
 DESCRIPTION="Crypto-currency software to manage libre currency - desktop"
 HOMEPAGE="https://duniter.org/"
 
-JOB_ID=40349
+JOB_ID=40430
 SRC_URI="amd64? ( https://git.duniter.org/nodes/typescript/duniter/-/jobs/${JOB_ID}/artifacts/raw/work/bin/${PN%%-bin}-v${PV}-linux-x64.tar.gz -> ${P}.tar.gz )"
 
 LICENSE="AGPL-3"
