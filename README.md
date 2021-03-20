@@ -57,13 +57,13 @@ Vous pouvez soit :
 
 # Applications
 
-## app-editors/pluma-grammalecte
+## app-editors/gedit-grammalecte
 
-:ticket: pluma-grammalecte
+:ticket: gedit-grammalecte
 
-:speech_balloon: Grammalecte plugin for pluma editor.
+:speech_balloon: Grammalecte plugin for gedit editor.
 
-:link: https://github.com/sveyret/pluma-grammalecte/
+:link: https://github.com/sveyret/gedit-grammalecte/
 
 ## app-shells/magicd
 
@@ -73,13 +73,13 @@ Vous pouvez soit :
 
 :link: https://github.com/sveyret/magicd/
 
-## app-text/grammalecte-bin
+## app-text/grammalecte
 
 :ticket: Grammalecte
 
-:speech_balloon: French grammar checker (binary distribution).
+:speech_balloon: French grammar checker.
 
-:link: http://grammalecte.net/
+:link: https://grammalecte.net/
 
 ## dev-db/squirrel-sql
 
