@@ -57,13 +57,13 @@ Vous pouvez soit :
 
 # Applications
 
-## app-editors/pluma-grammalecte
+## app-editors/gedit-grammalecte
 
-:ticket: pluma-grammalecte
+:ticket: gedit-grammalecte
 
-:speech_balloon: Grammalecte plugin for pluma editor.
+:speech_balloon: Grammalecte plugin for gedit editor.
 
-:link: https://github.com/sveyret/pluma-grammalecte/
+:link: https://github.com/sveyret/gedit-grammalecte/
 
 ## app-shells/magicd
 
