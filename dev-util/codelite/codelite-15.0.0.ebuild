@@ -1,9 +1,11 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
 
-inherit cmake-utils wxwidgets
+WX_GTK_VER=3.0-gtk3
+
+inherit cmake xdg-utils wxwidgets
 
 DESCRIPTION="A Free, open source, cross platform C, C++, PHP and Node.js IDE"
 HOMEPAGE="http://codelite.org/"
@@ -21,13 +23,22 @@ IUSE=""
 
 KEYWORDS="~amd64 ~x86"
 
-RDEPEND=">=x11-libs/wxGTK-3.0.0:3.0 net-libs/libssh dev-db/sqlite:3"
+RDEPEND=">=x11-libs/wxGTK-3.0.0:3.0-gtk3 net-libs/libssh dev-db/sqlite:3"
 DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/${PN}-${SEEN_VERSION}"
 
 src_prepare() {
-	WX_GTK_VER=3.0 setup-wxwidgets
-	cmake-utils_src_prepare
+	setup-wxwidgets
+	cmake_src_prepare
 	eapply_user
 }
+
+pkg_postinst() {
+	xdg_icon_cache_update
+}
+
+pkg_postrm() {
+	xdg_icon_cache_update
+}
+
